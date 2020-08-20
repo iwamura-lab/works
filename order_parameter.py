@@ -1,5 +1,5 @@
 '''
-Practice of python coding and software development by using github
+Practice of python coding and software development by using Github
 '''
 # set python interpreter(2 or 3 ?)
 # !/usr/bin/python3
@@ -25,3 +25,4 @@ def calc_sph_harm(sph_indices, phi, theta):
 
     sph_indices = sph_indices.reverse()
     return sp.sph_harm(sph_indices[0], sph_indices[1], phi, theta)
+
