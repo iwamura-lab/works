@@ -1,4 +1,5 @@
 .vscode/
-/projection/
 /dataset/
+/projection/
+/__pycache__/
 /pylintrc

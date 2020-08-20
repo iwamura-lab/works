@@ -26,3 +26,22 @@ def calc_sph_harm(sph_indices, phi, theta):
     sph_indices = sph_indices.reverse()
     return sp.sph_harm(sph_indices[0], sph_indices[1], phi, theta)
 
+
+def calc_order_parameter(poscar):
+    """
+    Docstring:
+    calc_order_parameter(poscar, l, m, cut_off, params)
+
+    Calculate order parameters when using spherical harmonics as basis functions.
+    -----------------------------------------------------------------------------
+    Input
+        poscar (POSCAR) : POSCAR file(information of atomic positions)
+        l      (int)    : azimuthal quantum number
+        m      (int)    : magnetic quantum number
+        cut_off(float)  : cut off radius
+        params (dict)   : parameters of radial function
+                          {center: float, height: float}
+    -----------------------------------------------------------------------------
+    """
+    _structure = mg.Structure.from_file(poscar)
+    return _structure
