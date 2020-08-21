@@ -27,7 +27,7 @@ def calc_sph_harm(sph_indices, phi, theta):
     return sp.sph_harm(sph_indices[0], sph_indices[1], phi, theta)
 
 
-def calc_order_parameter(poscar):
+def calc_order_parameter(poscar, cut_off):
     """
     Docstring:
     calc_order_parameter(poscar, l, m, cut_off, params)
@@ -40,8 +40,26 @@ def calc_order_parameter(poscar):
         m      (int)    : magnetic quantum number
         cut_off(float)  : cut off radius
         params (dict)   : parameters of radial function
-                          {center: float, height: float}
+                          {center: float,  height: float}
     -----------------------------------------------------------------------------
     """
+    # get information of atomic positions by reading POSCAR file
     _structure = mg.Structure.from_file(poscar)
-    return _structure
+    atom_sites = _structure.sites
+    pos = []
+
+    # get information of neighboring atoms and calculate order parameters
+    for each_site in atom_sites:
+        my_coords = []
+        _neighbors = _structure.get_neighbors(each_site, cut_off)
+        for neighbor in _neighbors:
+            vec = neighbor.coords - each_site.coords
+            r = np.linalg.norm(vec)
+            theta = np.arccos(vec[2]/r)
+            phi = np.arccos(vec[0]/(r*np.sin(theta)))
+            if vec[1]/np.sin(theta) < 0:
+                phi = -phi + 2 * np.pi
+            my_coords.append([r, theta, phi])
+        pos.append(my_coords)
+
+    return pos

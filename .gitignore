@@ -1,5 +1,6 @@
 .vscode/
 /dataset/
 /projection/
-/__pycache__/
+__pycache__
 /pylintrc
+/POSCAR
