@@ -27,7 +27,7 @@ def calc_sph_harm(sph_indices, phi, theta):
     return sp.sph_harm(sph_indices[0], sph_indices[1], phi, theta)
 
 
-def calc_order_parameter(poscar, cut_off):
+def calc_order_parameter(poscar, l, m, cut_off, params):
     """
     Docstring:
     calc_order_parameter(poscar, l, m, cut_off, params)
@@ -46,11 +46,12 @@ def calc_order_parameter(poscar, cut_off):
     # get information of atomic positions by reading POSCAR file
     _structure = mg.Structure.from_file(poscar)
     atom_sites = _structure.sites
-    pos = []
+    quantum = np.array([l, m])
 
     # get information of neighboring atoms and calculate order parameters
     for each_site in atom_sites:
-        my_coords = []
+        a = 0
+        results = []
         _neighbors = _structure.get_neighbors(each_site, cut_off)
         for neighbor in _neighbors:
             vec = neighbor.coords - each_site.coords
@@ -59,7 +60,9 @@ def calc_order_parameter(poscar, cut_off):
             phi = np.arccos(vec[0]/(r*np.sin(theta)))
             if vec[1]/np.sin(theta) < 0:
                 phi = -phi + 2 * np.pi
-            my_coords.append([r, theta, phi])
-        pos.append(my_coords)
-
-    return pos
+            gauss = np.exp(- params[height] * ((r - params[center])**2))
+            func_cut = 0.5 * (np.cos(np.pi * r/cut_off)+1)
+            radial = gauss * func_cut
+            a += radial * calc_sph_harm(quantum, phi, theta)
+        results.append(a)
+    return a
