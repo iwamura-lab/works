@@ -1,5 +1,5 @@
 '''
-Practice of python coding and software development by using Github
+Program to calculate order parameters when selecting spherical harmonics as basis 
 '''
 # set python interpreter(2 or 3 ?)
 # !/usr/bin/python3
@@ -32,10 +32,10 @@ def calc_order_parameter(poscar, l, m, cut_off, params):
     Docstring:
     calc_order_parameter(poscar, l, m, cut_off, params)
 
-    Calculate order parameters when using spherical harmonics as basis functions.
+    Calculate order parameters in using spherical harmonics as basis functions.
     -----------------------------------------------------------------------------
     Input
-        poscar (POSCAR) : POSCAR file(information of atomic positions)
+        poscar (POSCAR) : the path of POSCAR file(information of atomic positions)
         l      (int)    : azimuthal quantum number
         m      (int)    : magnetic quantum number
         cut_off(float)  : cut off radius
@@ -73,11 +73,12 @@ def calc_order_parameter(poscar, l, m, cut_off, params):
     return np.conj(results)
 
 if __name__ == "__main__":
+    PATH = (input("Enter the PATH of POSCAR file.:"))
     n1 = int(input("Enter the azimuthal quantum number.:"))
     n2 = int(input("Enter the magnetic quantum number.:"))
     cr = float(input("Enter the cut-off radius.:"))
     rpar = {"center": 0, "height": 0}
     rpar["center"] = float(input("Enter the central position of radial function.:"))
     rpar["height"] = float(input("Enter the height of radial function.:"))
-    print(calc_order_parameter("POSCAR", n1, n2, cr, rpar))
+    print(calc_order_parameter(PATH, n1, n2, cr, rpar))
         

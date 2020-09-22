@@ -10,4 +10,3 @@ other functions as basis functions in the near future
 
 # Import modules to calculate
 import numpy as np
-""
