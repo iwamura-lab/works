@@ -1,5 +1,5 @@
 '''
-Program to calculate order parameters when selecting spherical harmonics as basis 
+Program to calculate order parameters when selecting spherical harmonics as basis
 '''
 # set python interpreter(2 or 3 ?)
 # !/usr/bin/python3
