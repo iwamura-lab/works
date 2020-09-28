@@ -10,7 +10,7 @@ in order to use other functions as basis functions in the near future
 # -*- coding: UTF-8 -*-
 
 # import standard modules
-import itertools
+from itertools import product
 
 # import modules to operate matrix
 import numpy as np
@@ -22,7 +22,7 @@ import pandas as pd
 import sympy
 from sympy.physics.wigner import clebsch_gordan as cg
 
-def make_index(orbit_ns):
+def make_index(orbit_ls):
     """
     Docstring:
     make_index(orbit_ns)
@@ -30,30 +30,30 @@ def make_index(orbit_ns):
     Make multi-index from the input orbit_ns
     """
     mindex = []
-    for l in orbit_ns:
+    for l in orbit_ls:
         mindex.append([m for m in range(-l, l+1)])
     return mindex
 
 if __name__ == "__main__":
     # get the l list
     print("Enter the azimuthal quantum number list of seed functions")
-    orbit_ns = input("such as l1, l2 ,... , lp:")
-    orbit_ns = orbit_ns.split(",")
-    orbit_ns = [int(l) for l in orbit_ns]
+    lis = input("such as l1, l2 ,... , lp:")
+    lis = lis.split(",")
+    lis = [int(l) for l in lis]
     # calculate total sum of m
     lsum = 1
-    for i in orbit_ns:
+    for i in lis:
         lsum *= 2 * i + 1
-    # make multi-index for DataFrame and make DataFrame
-    mlis = make_index(orbit_ns)
-    mindex = pd.MultiIndex.from_product(mlis)
-    df = pd.DataFrame(np.zeros((lsum, lsum)), index=mindex, columns=mindex)
-    if len(orbit_ns) == 2 and orbit_ns[0] == orbit_ns[1]:
-        for i in mindex:
-            for j in mindex:
-                if i[0] == -i[1] and j[0] == -j[1]:
-                    df.loc[i, j] = (-1)**(i[1]-j[1]) * 1/(2 * orbit_ns[0] + 1)
-    if len(orbit_ns) == 3:
+    if len(lis) == 2 and lis[0] == lis[1]:
+        id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1)))
+        pmat = np.zeros((lsum, lsum))
+        mid = {c: i for i, c in enumerate(id_list)}
+        for cm in id_list:
+            for rm in id_list:
+                if cm[0] == -cm[1] and rm[0] == -rm[1]:
+                    pmat[mid[cm], mid[rm]] = (-1)**(cm[1]-rm[1])*1/(2*lis[0]+1)
+
+    if len(lis) == 3:
         for i in mindex:
             for j in mindex:
                 c1 = cg(orbit_ns[0], orbit_ns[1], orbit_ns[2], i[0], i[1], -i[2])
@@ -61,7 +61,7 @@ if __name__ == "__main__":
                 df.loc[i, j] = sympy.N((-1)**(i[2]-j[2]) * 1/(2 * orbit_ns[2] + 1) * c1 * c2)
         df = np.array(df).astype(np.float64)
         df = pd.DataFrame(df, index=mindex, columns=mindex)
-    if len(orbit_ns) == 4:
+    if len(lis) == 4:
         for i in mindex:
             for j in mindex:
                 p = 0
@@ -73,7 +73,7 @@ if __name__ == "__main__":
                     p += (-1)**(i[3]-j[3])*1/(2*orbit_ns[3]+1)*c1*c2*c3*c4
         df = np.array(df).astype(np.float64)
         df = pd.DataFrame(df, index=mindex, columns=mindex)
-    if len(orbit_ns) == 5:
+    if len(lis) == 5:
         for i in mindex:
             for j in mindex:
                 p = 0
@@ -87,7 +87,7 @@ if __name__ == "__main__":
                         c6 = cg(orbit_ns[3], L, orbit_ns[4], j[3], j[0]+j[1]+j[2], -j[4])
                         p += (-1)**(i[4]-j[4])*1/(2*orbit_ns[4]+1)*c1*c2*c3*c4*c5*c6
         df = np.array(df).astype(np.float64)
-    if len(orbit_ns) == 6:
+    if len(lis) == 6:
         for i in mindex:
             for j in mindex:
                 p = 0
@@ -107,7 +107,7 @@ if __name__ == "__main__":
     # calculate eigenvalue and eigenvector
     # import pdb
     # pdb.set_trace()
-    eig = np.linalg.eig(df)
+    eig = np.linalg.eig(pmat)
     evecs = eig[1][:, np.isclose(eig[0], 1)]
     if np.any(evecs):
         df_evec = pd.DataFrame(evecs, index=mindex)
