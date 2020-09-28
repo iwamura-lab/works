@@ -56,8 +56,9 @@ if __name__ == "__main__":
                 c1 = clebsch_gordan(orbit_ns[0], orbit_ns[1], orbit_ns[2], i[0], i[1], -i[2])
                 c2 = clebsch_gordan(orbit_ns[0], orbit_ns[1], orbit_ns[2], j[0], j[1], -j[2])
                 df.loc[i, j] = sympy.N((-1)**(i[2]-j[2]) * 1/(2 * orbit_ns[2] + 1) * c1 * c2)
+                df = np.array(df).astype(np.float64)
+                df = pd.DataFrame(df, index=mindex, columns=mindex)
     # calculate eigenvalue and eigenvector
-    print(df.loc[(1, 1, -2), (1, 1, -2)])
     eig = np.linalg.eig(df)
     evecs = eig[1][:, np.isclose(eig[0], 1)]
     ser = pd.Series(evecs.reshape(-1), index=mindex)
