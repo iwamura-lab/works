@@ -9,6 +9,9 @@ in order to use other functions as basis functions in the near future
 # !/usr/bin/env/python
 # -*- coding: UTF-8 -*-
 
+# import standard modules
+import itertools
+
 # import modules to operate matrix
 import numpy as np
 
@@ -56,8 +59,8 @@ if __name__ == "__main__":
                 c1 = cg(orbit_ns[0], orbit_ns[1], orbit_ns[2], i[0], i[1], -i[2])
                 c2 = cg(orbit_ns[0], orbit_ns[1], orbit_ns[2], j[0], j[1], -j[2])
                 df.loc[i, j] = sympy.N((-1)**(i[2]-j[2]) * 1/(2 * orbit_ns[2] + 1) * c1 * c2)
-                df = np.array(df).astype(np.float64)
-                df = pd.DataFrame(df, index=mindex, columns=mindex)
+        df = np.array(df).astype(np.float64)
+        df = pd.DataFrame(df, index=mindex, columns=mindex)
     if len(orbit_ns) == 4:
         for i in mindex:
             for j in mindex:
@@ -68,8 +71,8 @@ if __name__ == "__main__":
                     c3 = cg(orbit_ns[2], l, orbit_ns[3], i[2], i[0]+i[1], -i[3])
                     c4 = cg(orbit_ns[2], l, orbit_ns[3], j[2], j[0]+j[1], -j[3])
                     p += (-1)**(i[3]-j[3])*1/(2*orbit_ns[3]+1)*c1*c2*c3*c4
-                df = np.array(df).astype(np.float64)
-                df = pd.DataFrame(df, index=mindex, columns=mindex)
+        df = np.array(df).astype(np.float64)
+        df = pd.DataFrame(df, index=mindex, columns=mindex)
     if len(orbit_ns) == 5:
         for i in mindex:
             for j in mindex:
@@ -83,8 +86,7 @@ if __name__ == "__main__":
                         c5 = cg(orbit_ns[3], L, orbit_ns[4], i[3], i[0]+i[1]+i[2], -i[4])
                         c6 = cg(orbit_ns[3], L, orbit_ns[4], j[3], j[0]+j[1]+j[2], -j[4])
                         p += (-1)**(i[4]-j[4])*1/(2*orbit_ns[4]+1)*c1*c2*c3*c4*c5*c6
-                df = np.array(df).astype(np.float64)
-                df = pd.DataFrame(df, index=mindex, columns=mindex)
+        df = np.array(df).astype(np.float64)
     if len(orbit_ns) == 6:
         for i in mindex:
             for j in mindex:
@@ -101,11 +103,12 @@ if __name__ == "__main__":
                             c7 = cg(orbit_ns[4], S, orbit_ns[5], i[4], i[0]+i[1]+i[2]+i[3], -i[5])
                             c8 = cg(orbit_ns[4], S, orbit_ns[5], j[4], j[0]+j[1]+j[2]+j[3], -j[5])
                             p += (-1)**(i[5]-j[5])*1/(2*orbit_ns[5]+1)*c1*c2*c3*c4*c5*c6*c7*c8
-                df = np.array(df).astype(np.float64)
-                df = pd.DataFrame(df, index=mindex, columns=mindex)
+        df = np.array(df).astype(np.float64)
     # calculate eigenvalue and eigenvector
+    # import pdb
+    # pdb.set_trace()
     eig = np.linalg.eig(df)
     evecs = eig[1][:, np.isclose(eig[0], 1)]
     if np.any(evecs):
-        ser = pd.Series(evecs.reshape(-1), index=mindex)
-        print(ser)
+        df_evec = pd.DataFrame(evecs, index=mindex)
+        print(df_evec)
