@@ -15,11 +15,7 @@ from itertools import product
 # import modules to operate matrix
 import numpy as np
 
-# import modules to handle enormous datasets
-import pandas as pd
-
 # import modules to use mathematical functions
-import sympy
 from sympy.physics.wigner import clebsch_gordan as cg
 
 def make_index(orbit_ls):
@@ -96,27 +92,32 @@ if __name__ == "__main__":
                 pmat[mid[cm], mid[rm]] = p
         pmat = pmat.astype(np.float64)
     if len(lis) == 6:
-        for i in mindex:
-            for j in mindex:
+        id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
+                                range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1),
+                                range(-lis[4], lis[4]+1), range(-lis[5], lis[5]+1)))
+        mid = {c: i for i, c in enumerate(id_list)}
+        for cm in id_list:
+            for rm in id_list:
                 p = 0
                 for l in range(abs(lis[0]-lis[1]), lis[0]+lis[1]):
                     for L in range(abs(lis[2]-l), lis[2]+l):
                         for S in range(abs(lis[3]-L), lis[3]+L):
-                            c1 = cg(lis[0], lis[1], l, i[0], i[1], i[0]+i[1])
-                            c2 = cg(lis[0], lis[1], l, j[0], j[1], j[0]+j[1])
-                            c3 = cg(lis[2], l, L, i[2], i[0]+i[1], i[0]+i[1]+i[2])
-                            c4 = cg(lis[2], l, L, j[2], j[0]+j[1], j[0]+j[1]+j[2])
-                            c5 = cg(lis[3], L, S, i[3], i[0]+i[1]+i[2], i[0]+i[1]+i[2]+i[3])
-                            c6 = cg(lis[3], L, S, j[3], j[0]+j[1]+j[2], j[0]+j[1]+j[2]+j[3])
-                            c7 = cg(lis[4], S, lis[5], i[4], i[0]+i[1]+i[2]+i[3], -i[5])
-                            c8 = cg(lis[4], S, lis[5], j[4], j[0]+j[1]+j[2]+j[3], -j[5])
-                            p += (-1)**(i[5]-j[5])*1/(2*lis[5]+1)*c1*c2*c3*c4*c5*c6*c7*c8
-        df = np.array(df).astype(np.float64)
+                            c1 = cg(lis[0], lis[1], l, cm[0], cm[1], cm[0]+cm[1])
+                            c2 = cg(lis[0], lis[1], l, rm[0], rm[1], rm[0]+rm[1])
+                            c3 = cg(lis[2], l, L, cm[2], cm[0]+cm[1], cm[0]+cm[1]+cm[2])
+                            c4 = cg(lis[2], l, L, rm[2], rm[0]+rm[1], rm[0]+rm[1]+rm[2])
+                            c5 = cg(lis[3], L, S, cm[3], cm[0]+cm[1]+cm[2], cm[0]+cm[1]+cm[2]+cm[3])
+                            c6 = cg(lis[3], L, S, rm[3], rm[0]+rm[1]+rm[2], rm[0]+rm[1]+rm[2]+rm[3])
+                            c7 = cg(lis[4], S, lis[5], cm[4], cm[0]+cm[1]+cm[2]+cm[3], -cm[5])
+                            c8 = cg(lis[4], S, lis[5], rm[4], rm[0]+rm[1]+rm[2]+rm[3], -rm[5])
+                            p += (-1)**(cm[5]-rm[5])*1/(2*lis[5]+1)*c1*c2*c3*c4*c5*c6*c7*c8
+                pmat[mid[cm], mid[rm]] = p
+        pmat = pmat.astype(np.float64)
     # calculate eigenvalue and eigenvector
+    # insert debugger
     # import pdb
     # pdb.set_trace()
     eig = np.linalg.eig(pmat)
     evecs = eig[1][:, np.isclose(eig[0], 1)]
     if np.any(evecs):
-        df_evec = pd.DataFrame(evecs, index=mindex)
-        print(df_evec)
+        print(evecs)
