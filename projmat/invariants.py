@@ -12,12 +12,42 @@ in order to use other functions as basis functions in the near future
 # import standard modules
 from itertools import product
 import sys
+from math import factorial, sqrt
 
 # import modules to operate matrix
 import numpy as np
 
 # import modules to use mathematical functions
 from sympy.physics.wigner import clebsch_gordan as cg
+
+def my_clebsch(j1, j2, j3, m1, m2, m3):
+    '''
+    Docstring:
+    my_clebsch(j1, j2, j3, m1, m2, m3)
+
+    Calculate clebsch_gordan coefficient from input arguments.
+    Sympy is the module to use symbolic algebra, so its behavior is too slow
+    when using high order matrix.
+    When only the result value is needed, this function is useful.
+    '''
+    if m1 + m2 != m3:
+        return 0
+    max1 = j2 + j3 + m1
+    max2 = j3 - j1 + j2
+    max3 = j3 + m3
+    min1 = m1 - j1
+    min2 = j2 - j1 + m3
+    vmax = min(max1, max2, max3)
+    vmin = max(min1, min2, 0)
+    cf = sqrt((2*j3+1)*factorial(j3+j1-j2)*factorial(j3-j1+j2)*
+              factorial(j1+j2-j3)*factorial(j3+m3)*factorial(j3-m3)/
+              (factorial(j1+j2+j3+1)*factorial(j1-m1)*factorial(j1+m1)*
+               factorial(j2-m2)*factorial(j2+m2)))
+    csum = 0
+    for v in range(vmin, vmax+1):
+        csum += ((-1)**(v+j2+m2)*factorial(j2+j3+m1-v)*factorial(j1-m1+v)/
+                 (factorial(v)*factorial(j3-j1+j2-v)*factorial(j3+m3-v)*factorial(v+j1-j2-m3)))
+    return cf * csum
 
 if __name__ == "__main__":
     # get the l list
