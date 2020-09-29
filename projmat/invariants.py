@@ -18,7 +18,7 @@ from math import factorial, sqrt
 import numpy as np
 
 # import modules to use mathematical functions
-from sympy.physics.wigner import clebsch_gordan as cg
+# from sympy.physics.wigner import clebsch_gordan as my_clebsch
 
 def my_clebsch(j1, j2, j3, m1, m2, m3):
     '''
@@ -39,10 +39,21 @@ def my_clebsch(j1, j2, j3, m1, m2, m3):
     min2 = j2 - j1 + m3
     vmax = min(max1, max2, max3)
     vmin = max(min1, min2, 0)
-    cf = sqrt((2*j3+1)*factorial(j3+j1-j2)*factorial(j3-j1+j2)*
-              factorial(j1+j2-j3)*factorial(j3+m3)*factorial(j3-m3)/
-              (factorial(j1+j2+j3+1)*factorial(j1-m1)*factorial(j1+m1)*
-               factorial(j2-m2)*factorial(j2+m2)))
+    deno = [j3+j1-j2, j3-j1+j2, j1+j2-j3, j3+m3, j3-m3]
+    nume = [j1+j2+j3+1, j1-m1, j1+m1, j2-m2, j2+m2]
+    for i in deno:
+        if i < 0:
+            return 0
+    for i in nume:
+        if i < 0:
+            return 0
+    dfac = 1
+    for i in deno:
+        dfac *= factorial(i)
+    nfac = 1
+    for i in nume:
+        nfac *= factorial(i)
+    cf = sqrt((2*j3+1)*dfac / nfac)
     csum = 0
     for v in range(vmin, vmax+1):
         csum += ((-1)**(v+j2+m2)*factorial(j2+j3+m1-v)*factorial(j1-m1+v)/
@@ -77,8 +88,8 @@ if __name__ == "__main__":
         mid = {c: i for i, c in enumerate(id_list)}
         for cm in id_list:
             for rm in id_list:
-                c1 = cg(lis[0], lis[1], lis[2], cm[0], cm[1], -cm[2])
-                c2 = cg(lis[0], lis[1], lis[2], rm[0], rm[1], -rm[2])
+                c1 = my_clebsch(lis[0], lis[1], lis[2], cm[0], cm[1], -cm[2])
+                c2 = my_clebsch(lis[0], lis[1], lis[2], rm[0], rm[1], -rm[2])
                 pmat[mid[cm], mid[rm]] = (-1)**(cm[2]-rm[2])/(2*lis[2]+1)*c1*c2
         pmat = pmat.astype(np.float64)
     if len(lis) == 4:
@@ -89,10 +100,10 @@ if __name__ == "__main__":
             for rm in id_list:
                 p = 0
                 for l in range(abs(lis[0]-lis[1]), lis[0]+lis[1]):
-                    c1 = cg(lis[0], lis[1], l, cm[0], cm[1], cm[0]+cm[1])
-                    c2 = cg(lis[0], lis[1], l, rm[0], rm[1], rm[0]+rm[1])
-                    c3 = cg(lis[2], l, lis[3], cm[2], cm[0]+cm[1], -cm[3])
-                    c4 = cg(lis[2], l, lis[3], rm[2], rm[0]+rm[1], -rm[3])
+                    c1 = my_clebsch(lis[0], lis[1], l, cm[0], cm[1], cm[0]+cm[1])
+                    c2 = my_clebsch(lis[0], lis[1], l, rm[0], rm[1], rm[0]+rm[1])
+                    c3 = my_clebsch(lis[2], l, lis[3], cm[2], cm[0]+cm[1], -cm[3])
+                    c4 = my_clebsch(lis[2], l, lis[3], rm[2], rm[0]+rm[1], -rm[3])
                     p += (-1)**(rm[3]-cm[3])/(2*lis[3]+1)*c1*c2*c3*c4
                 pmat[mid[cm], mid[rm]] = p
         pmat = pmat.astype(np.float64)
@@ -106,12 +117,12 @@ if __name__ == "__main__":
                 p = 0
                 for l in range(abs(lis[0]-lis[1]), lis[0]+lis[1]):
                     for L in range(abs(lis[2]-l), lis[2]+l):
-                        c1 = cg(lis[0], lis[1], l, cm[0], cm[1], cm[0]+cm[1])
-                        c2 = cg(lis[0], lis[1], l, rm[0], rm[1], rm[0]+rm[1])
-                        c3 = cg(lis[2], l, L, cm[2], cm[0]+cm[1], cm[0]+cm[1]+cm[2])
-                        c4 = cg(lis[2], l, L, rm[2], rm[0]+rm[1], rm[0]+rm[1]+rm[2])
-                        c5 = cg(lis[3], L, lis[4], cm[3], cm[0]+cm[1]+cm[2], -cm[4])
-                        c6 = cg(lis[3], L, lis[4], rm[3], rm[0]+rm[1]+rm[2], -rm[4])
+                        c1 = my_clebsch(lis[0], lis[1], l, cm[0], cm[1], cm[0]+cm[1])
+                        c2 = my_clebsch(lis[0], lis[1], l, rm[0], rm[1], rm[0]+rm[1])
+                        c3 = my_clebsch(lis[2], l, L, cm[2], cm[0]+cm[1], cm[0]+cm[1]+cm[2])
+                        c4 = my_clebsch(lis[2], l, L, rm[2], rm[0]+rm[1], rm[0]+rm[1]+rm[2])
+                        c5 = my_clebsch(lis[3], L, lis[4], cm[3], cm[0]+cm[1]+cm[2], -cm[4])
+                        c6 = my_clebsch(lis[3], L, lis[4], rm[3], rm[0]+rm[1]+rm[2], -rm[4])
                         p += (-1)**(cm[4]-rm[4])*1/(2*lis[4]+1)*c1*c2*c3*c4*c5*c6
                 pmat[mid[cm], mid[rm]] = p
         pmat = pmat.astype(np.float64)
@@ -126,14 +137,18 @@ if __name__ == "__main__":
                 for l in range(abs(lis[0]-lis[1]), lis[0]+lis[1]):
                     for L in range(abs(lis[2]-l), lis[2]+l):
                         for S in range(abs(lis[3]-L), lis[3]+L):
-                            c1 = cg(lis[0], lis[1], l, cm[0], cm[1], cm[0]+cm[1])
-                            c2 = cg(lis[0], lis[1], l, rm[0], rm[1], rm[0]+rm[1])
-                            c3 = cg(lis[2], l, L, cm[2], cm[0]+cm[1], cm[0]+cm[1]+cm[2])
-                            c4 = cg(lis[2], l, L, rm[2], rm[0]+rm[1], rm[0]+rm[1]+rm[2])
-                            c5 = cg(lis[3], L, S, cm[3], cm[0]+cm[1]+cm[2], cm[0]+cm[1]+cm[2]+cm[3])
-                            c6 = cg(lis[3], L, S, rm[3], rm[0]+rm[1]+rm[2], rm[0]+rm[1]+rm[2]+rm[3])
-                            c7 = cg(lis[4], S, lis[5], cm[4], cm[0]+cm[1]+cm[2]+cm[3], -cm[5])
-                            c8 = cg(lis[4], S, lis[5], rm[4], rm[0]+rm[1]+rm[2]+rm[3], -rm[5])
+                            c1 = my_clebsch(lis[0], lis[1], l, cm[0], cm[1], cm[0]+cm[1])
+                            c2 = my_clebsch(lis[0], lis[1], l, rm[0], rm[1], rm[0]+rm[1])
+                            c3 = my_clebsch(lis[2], l, L, cm[2], cm[0]+cm[1], cm[0]+cm[1]+cm[2])
+                            c4 = my_clebsch(lis[2], l, L, rm[2], rm[0]+rm[1], rm[0]+rm[1]+rm[2])
+                            c5 = my_clebsch(lis[3], L, S, cm[3], cm[0]+cm[1]+cm[2],
+                                            cm[0]+cm[1]+cm[2]+cm[3])
+                            c6 = my_clebsch(lis[3], L, S, rm[3], rm[0]+rm[1]+rm[2],
+                                            rm[0]+rm[1]+rm[2]+rm[3])
+                            c7 = my_clebsch(lis[4], S, lis[5], cm[4],
+                                            cm[0]+cm[1]+cm[2]+cm[3], -cm[5])
+                            c8 = my_clebsch(lis[4], S, lis[5], rm[4],
+                                            rm[0]+rm[1]+rm[2]+rm[3], -rm[5])
                             p += (-1)**(cm[5]-rm[5])*1/(2*lis[5]+1)*c1*c2*c3*c4*c5*c6*c7*c8
                 pmat[mid[cm], mid[rm]] = p
         pmat = pmat.astype(np.float64)
@@ -141,7 +156,6 @@ if __name__ == "__main__":
     # insert debugger
     # import pdb
     # pdb.set_trace()
-    print(elapsed_time)
     eig = np.linalg.eig(pmat)
     evecs = eig[1][:, np.isclose(eig[0], 1)]
     if np.any(evecs):
