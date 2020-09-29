@@ -10,105 +10,109 @@ in order to use other functions as basis functions in the near future
 # -*- coding: UTF-8 -*-
 
 # import standard modules
-import itertools
+from itertools import product
+import sys
 
 # import modules to operate matrix
 import numpy as np
 
-# import modules to handle enormous datasets
-import pandas as pd
-
 # import modules to use mathematical functions
-import sympy
 from sympy.physics.wigner import clebsch_gordan as cg
-
-def make_index(orbit_ns):
-    """
-    Docstring:
-    make_index(orbit_ns)
-
-    Make multi-index from the input orbit_ns
-    """
-    mindex = []
-    for l in orbit_ns:
-        mindex.append([m for m in range(-l, l+1)])
-    return mindex
 
 if __name__ == "__main__":
     # get the l list
     print("Enter the azimuthal quantum number list of seed functions")
-    orbit_ns = input("such as l1, l2 ,... , lp:")
-    orbit_ns = orbit_ns.split(",")
-    orbit_ns = [int(l) for l in orbit_ns]
+    lis = input("such as l1, l2 ,... , lp:")
+    lis = lis.split(",")
+    lis = [int(l) for l in lis]
     # calculate total sum of m
     lsum = 1
-    for i in orbit_ns:
+    for i in lis:
         lsum *= 2 * i + 1
-    # make multi-index for DataFrame and make DataFrame
-    mlis = make_index(orbit_ns)
-    mindex = pd.MultiIndex.from_product(mlis)
-    df = pd.DataFrame(np.zeros((lsum, lsum)), index=mindex, columns=mindex)
-    if len(orbit_ns) == 2 and orbit_ns[0] == orbit_ns[1]:
-        for i in mindex:
-            for j in mindex:
-                if i[0] == -i[1] and j[0] == -j[1]:
-                    df.loc[i, j] = (-1)**(i[1]-j[1]) * 1/(2 * orbit_ns[0] + 1)
-    if len(orbit_ns) == 3:
-        for i in mindex:
-            for j in mindex:
-                c1 = cg(orbit_ns[0], orbit_ns[1], orbit_ns[2], i[0], i[1], -i[2])
-                c2 = cg(orbit_ns[0], orbit_ns[1], orbit_ns[2], j[0], j[1], -j[2])
-                df.loc[i, j] = sympy.N((-1)**(i[2]-j[2]) * 1/(2 * orbit_ns[2] + 1) * c1 * c2)
-        df = np.array(df).astype(np.float64)
-        df = pd.DataFrame(df, index=mindex, columns=mindex)
-    if len(orbit_ns) == 4:
-        for i in mindex:
-            for j in mindex:
+    pmat = np.zeros((lsum, lsum))
+    # division to cases
+    if len(lis) == 2 and lis[0] == lis[1]:
+        id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1)))
+        mid = {c: i for i, c in enumerate(id_list)}
+        for cm in id_list:
+            for rm in id_list:
+                if cm[0] == -cm[1] and rm[0] == -rm[1]:
+                    pmat[mid[cm], mid[rm]] = (-1)**(cm[1]-rm[1])/(2*lis[0]+1)
+    elif len(lis) == 2 and lis[0] != lis[1]:
+        print("Projection matrix equals to zero matrix")
+        sys.exit(0)
+    if len(lis) == 3:
+        id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
+                               range(-lis[2], lis[2]+1)))
+        mid = {c: i for i, c in enumerate(id_list)}
+        for cm in id_list:
+            for rm in id_list:
+                c1 = cg(lis[0], lis[1], lis[2], cm[0], cm[1], -cm[2])
+                c2 = cg(lis[0], lis[1], lis[2], rm[0], rm[1], -rm[2])
+                pmat[mid[cm], mid[rm]] = (-1)**(cm[2]-rm[2])/(2*lis[2]+1)*c1*c2
+        pmat = pmat.astype(np.float64)
+    if len(lis) == 4:
+        id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
+                               range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1)))
+        mid = {c: i for i, c in enumerate(id_list)}
+        for cm in id_list:
+            for rm in id_list:
                 p = 0
-                for l in range(abs(orbit_ns[0]-orbit_ns[1]), orbit_ns[0]+orbit_ns[1]):
-                    c1 = cg(orbit_ns[0], orbit_ns[1], l, i[0], i[1], i[0]+i[1])
-                    c2 = cg(orbit_ns[0], orbit_ns[1], l, j[0], j[1], j[0]+j[1])
-                    c3 = cg(orbit_ns[2], l, orbit_ns[3], i[2], i[0]+i[1], -i[3])
-                    c4 = cg(orbit_ns[2], l, orbit_ns[3], j[2], j[0]+j[1], -j[3])
-                    p += (-1)**(i[3]-j[3])*1/(2*orbit_ns[3]+1)*c1*c2*c3*c4
-        df = np.array(df).astype(np.float64)
-        df = pd.DataFrame(df, index=mindex, columns=mindex)
-    if len(orbit_ns) == 5:
-        for i in mindex:
-            for j in mindex:
+                for l in range(abs(lis[0]-lis[1]), lis[0]+lis[1]):
+                    c1 = cg(lis[0], lis[1], l, cm[0], cm[1], cm[0]+cm[1])
+                    c2 = cg(lis[0], lis[1], l, rm[0], rm[1], rm[0]+rm[1])
+                    c3 = cg(lis[2], l, lis[3], cm[2], cm[0]+cm[1], -cm[3])
+                    c4 = cg(lis[2], l, lis[3], rm[2], rm[0]+rm[1], -rm[3])
+                    p += (-1)**(rm[3]-cm[3])/(2*lis[3]+1)*c1*c2*c3*c4
+                pmat[mid[cm], mid[rm]] = p
+        pmat = pmat.astype(np.float64)
+    if len(lis) == 5:
+        id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
+                               range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1),
+                               range(-lis[4], lis[4]+1)))
+        mid = {c: i for i, c in enumerate(id_list)}
+        for cm in id_list:
+            for rm in id_list:
                 p = 0
-                for l in range(abs(orbit_ns[0]-orbit_ns[1]), orbit_ns[0]+orbit_ns[1]):
-                    for L in range(abs(orbit_ns[2]-l), orbit_ns[2]+l):
-                        c1 = cg(orbit_ns[0], orbit_ns[1], l, i[0], i[1], i[0]+i[1])
-                        c2 = cg(orbit_ns[0], orbit_ns[1], l, j[0], j[1], j[0]+j[1])
-                        c3 = cg(orbit_ns[2], l, L, i[2], i[0]+i[1], i[0]+i[1]+i[2])
-                        c4 = cg(orbit_ns[2], l, L, j[2], j[0]+j[1], j[0]+j[1]+j[2])
-                        c5 = cg(orbit_ns[3], L, orbit_ns[4], i[3], i[0]+i[1]+i[2], -i[4])
-                        c6 = cg(orbit_ns[3], L, orbit_ns[4], j[3], j[0]+j[1]+j[2], -j[4])
-                        p += (-1)**(i[4]-j[4])*1/(2*orbit_ns[4]+1)*c1*c2*c3*c4*c5*c6
-        df = np.array(df).astype(np.float64)
-    if len(orbit_ns) == 6:
-        for i in mindex:
-            for j in mindex:
+                for l in range(abs(lis[0]-lis[1]), lis[0]+lis[1]):
+                    for L in range(abs(lis[2]-l), lis[2]+l):
+                        c1 = cg(lis[0], lis[1], l, cm[0], cm[1], cm[0]+cm[1])
+                        c2 = cg(lis[0], lis[1], l, rm[0], rm[1], rm[0]+rm[1])
+                        c3 = cg(lis[2], l, L, cm[2], cm[0]+cm[1], cm[0]+cm[1]+cm[2])
+                        c4 = cg(lis[2], l, L, rm[2], rm[0]+rm[1], rm[0]+rm[1]+rm[2])
+                        c5 = cg(lis[3], L, lis[4], cm[3], cm[0]+cm[1]+cm[2], -cm[4])
+                        c6 = cg(lis[3], L, lis[4], rm[3], rm[0]+rm[1]+rm[2], -rm[4])
+                        p += (-1)**(cm[4]-rm[4])*1/(2*lis[4]+1)*c1*c2*c3*c4*c5*c6
+                pmat[mid[cm], mid[rm]] = p
+        pmat = pmat.astype(np.float64)
+    if len(lis) == 6:
+        id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
+                               range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1),
+                               range(-lis[4], lis[4]+1), range(-lis[5], lis[5]+1)))
+        mid = {c: i for i, c in enumerate(id_list)}
+        for cm in id_list:
+            for rm in id_list:
                 p = 0
-                for l in range(abs(orbit_ns[0]-orbit_ns[1]), orbit_ns[0]+orbit_ns[1]):
-                    for L in range(abs(orbit_ns[2]-l), orbit_ns[2]+l):
-                        for S in range(abs(orbit_ns[3]-L), orbit_ns[3]+L):
-                            c1 = cg(orbit_ns[0], orbit_ns[1], l, i[0], i[1], i[0]+i[1])
-                            c2 = cg(orbit_ns[0], orbit_ns[1], l, j[0], j[1], j[0]+j[1])
-                            c3 = cg(orbit_ns[2], l, L, i[2], i[0]+i[1], i[0]+i[1]+i[2])
-                            c4 = cg(orbit_ns[2], l, L, j[2], j[0]+j[1], j[0]+j[1]+j[2])
-                            c5 = cg(orbit_ns[3], L, S, i[3], i[0]+i[1]+i[2], i[0]+i[1]+i[2]+i[3])
-                            c6 = cg(orbit_ns[3], L, S, j[3], j[0]+j[1]+j[2], j[0]+j[1]+j[2]+j[3])
-                            c7 = cg(orbit_ns[4], S, orbit_ns[5], i[4], i[0]+i[1]+i[2]+i[3], -i[5])
-                            c8 = cg(orbit_ns[4], S, orbit_ns[5], j[4], j[0]+j[1]+j[2]+j[3], -j[5])
-                            p += (-1)**(i[5]-j[5])*1/(2*orbit_ns[5]+1)*c1*c2*c3*c4*c5*c6*c7*c8
-        df = np.array(df).astype(np.float64)
+                for l in range(abs(lis[0]-lis[1]), lis[0]+lis[1]):
+                    for L in range(abs(lis[2]-l), lis[2]+l):
+                        for S in range(abs(lis[3]-L), lis[3]+L):
+                            c1 = cg(lis[0], lis[1], l, cm[0], cm[1], cm[0]+cm[1])
+                            c2 = cg(lis[0], lis[1], l, rm[0], rm[1], rm[0]+rm[1])
+                            c3 = cg(lis[2], l, L, cm[2], cm[0]+cm[1], cm[0]+cm[1]+cm[2])
+                            c4 = cg(lis[2], l, L, rm[2], rm[0]+rm[1], rm[0]+rm[1]+rm[2])
+                            c5 = cg(lis[3], L, S, cm[3], cm[0]+cm[1]+cm[2], cm[0]+cm[1]+cm[2]+cm[3])
+                            c6 = cg(lis[3], L, S, rm[3], rm[0]+rm[1]+rm[2], rm[0]+rm[1]+rm[2]+rm[3])
+                            c7 = cg(lis[4], S, lis[5], cm[4], cm[0]+cm[1]+cm[2]+cm[3], -cm[5])
+                            c8 = cg(lis[4], S, lis[5], rm[4], rm[0]+rm[1]+rm[2]+rm[3], -rm[5])
+                            p += (-1)**(cm[5]-rm[5])*1/(2*lis[5]+1)*c1*c2*c3*c4*c5*c6*c7*c8
+                pmat[mid[cm], mid[rm]] = p
+        pmat = pmat.astype(np.float64)
     # calculate eigenvalue and eigenvector
+    # insert debugger
     # import pdb
     # pdb.set_trace()
-    eig = np.linalg.eig(df)
+    print(elapsed_time)
+    eig = np.linalg.eig(pmat)
     evecs = eig[1][:, np.isclose(eig[0], 1)]
     if np.any(evecs):
-        df_evec = pd.DataFrame(evecs, index=mindex)
-        print(df_evec)
+        print(evecs)
