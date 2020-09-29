@@ -11,7 +11,7 @@ in order to use other functions as basis functions in the near future
 
 # import standard modules
 from itertools import product
-import time
+import sys
 
 # import modules to operate matrix
 import numpy as np
@@ -20,8 +20,6 @@ import numpy as np
 from sympy.physics.wigner import clebsch_gordan as cg
 
 if __name__ == "__main__":
-    # measure calculation time
-    start = time.time()
     # get the l list
     print("Enter the azimuthal quantum number list of seed functions")
     lis = input("such as l1, l2 ,... , lp:")
@@ -32,6 +30,7 @@ if __name__ == "__main__":
     for i in lis:
         lsum *= 2 * i + 1
     pmat = np.zeros((lsum, lsum))
+    # division to cases
     if len(lis) == 2 and lis[0] == lis[1]:
         id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1)))
         mid = {c: i for i, c in enumerate(id_list)}
@@ -39,6 +38,9 @@ if __name__ == "__main__":
             for rm in id_list:
                 if cm[0] == -cm[1] and rm[0] == -rm[1]:
                     pmat[mid[cm], mid[rm]] = (-1)**(cm[1]-rm[1])/(2*lis[0]+1)
+    elif len(lis) == 2 and lis[0] != lis[1]:
+        print("Projection matrix equals to zero matrix")
+        sys.exit(0)
     if len(lis) == 3:
         id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
                                range(-lis[2], lis[2]+1)))
@@ -109,7 +111,6 @@ if __name__ == "__main__":
     # insert debugger
     # import pdb
     # pdb.set_trace()
-    elapsed_time = time.time() - start
     print(elapsed_time)
     eig = np.linalg.eig(pmat)
     evecs = eig[1][:, np.isclose(eig[0], 1)]
