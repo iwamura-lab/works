@@ -11,6 +11,7 @@ in order to use other functions as basis functions in the near future
 
 # import standard modules
 from itertools import product
+import time
 
 # import modules to operate matrix
 import numpy as np
@@ -18,19 +19,9 @@ import numpy as np
 # import modules to use mathematical functions
 from sympy.physics.wigner import clebsch_gordan as cg
 
-def make_index(orbit_ls):
-    """
-    Docstring:
-    make_index(lis)
-
-    Make multi-index from the input lis
-    """
-    mindex = []
-    for l in orbit_ls:
-        mindex.append([m for m in range(-l, l+1)])
-    return mindex
-
 if __name__ == "__main__":
+    # measure calculation time
+    start = time.time()
     # get the l list
     print("Enter the azimuthal quantum number list of seed functions")
     lis = input("such as l1, l2 ,... , lp:")
@@ -50,17 +41,17 @@ if __name__ == "__main__":
                     pmat[mid[cm], mid[rm]] = (-1)**(cm[1]-rm[1])/(2*lis[0]+1)
     if len(lis) == 3:
         id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
-                            range(-lis[2], lis[2]+1)))
+                               range(-lis[2], lis[2]+1)))
         mid = {c: i for i, c in enumerate(id_list)}
         for cm in id_list:
             for rm in id_list:
                 c1 = cg(lis[0], lis[1], lis[2], cm[0], cm[1], -cm[2])
                 c2 = cg(lis[0], lis[1], lis[2], rm[0], rm[1], -rm[2])
-                pmat[mid[cm], mid[rm]] = (-1)**(cm[2]-rm[2])/(2*lis[2]+1)
+                pmat[mid[cm], mid[rm]] = (-1)**(cm[2]-rm[2])/(2*lis[2]+1)*c1*c2
         pmat = pmat.astype(np.float64)
     if len(lis) == 4:
         id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
-                    range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1)))
+                               range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1)))
         mid = {c: i for i, c in enumerate(id_list)}
         for cm in id_list:
             for rm in id_list:
@@ -75,7 +66,8 @@ if __name__ == "__main__":
         pmat = pmat.astype(np.float64)
     if len(lis) == 5:
         id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
-                    range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1), range(-lis[4], lis[4]+1)))
+                               range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1),
+                               range(-lis[4], lis[4]+1)))
         mid = {c: i for i, c in enumerate(id_list)}
         for cm in id_list:
             for rm in id_list:
@@ -93,8 +85,8 @@ if __name__ == "__main__":
         pmat = pmat.astype(np.float64)
     if len(lis) == 6:
         id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
-                                range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1),
-                                range(-lis[4], lis[4]+1), range(-lis[5], lis[5]+1)))
+                               range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1),
+                               range(-lis[4], lis[4]+1), range(-lis[5], lis[5]+1)))
         mid = {c: i for i, c in enumerate(id_list)}
         for cm in id_list:
             for rm in id_list:
@@ -117,6 +109,8 @@ if __name__ == "__main__":
     # insert debugger
     # import pdb
     # pdb.set_trace()
+    elapsed_time = time.time() - start
+    print(elapsed_time)
     eig = np.linalg.eig(pmat)
     evecs = eig[1][:, np.isclose(eig[0], 1)]
     if np.any(evecs):
