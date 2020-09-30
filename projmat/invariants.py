@@ -111,7 +111,6 @@ if __name__ == "__main__":
     # insert debugger
     # import pdb
     # pdb.set_trace()
-    print(elapsed_time)
     eig = np.linalg.eig(pmat)
     evecs = eig[1][:, np.isclose(eig[0], 1)]
     if np.any(evecs):
