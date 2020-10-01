@@ -30,8 +30,10 @@ def my_clebsch(j1, j2, j3, m1, m2, m3):
     when using high order matrix.
     When only the result value is needed, this function is useful.
     '''
+    # kronecker's delta item
     if m1 + m2 != m3:
         return 0
+    # determine the range of v
     max1 = j2 + j3 + m1
     max2 = j3 - j1 + j2
     max3 = j3 + m3
@@ -39,6 +41,7 @@ def my_clebsch(j1, j2, j3, m1, m2, m3):
     min2 = j2 - j1 + m3
     vmax = min(max1, max2, max3)
     vmin = max(min1, min2, 0)
+    # make factorial accept negative value
     deno = [j3+j1-j2, j3-j1+j2, j1+j2-j3, j3+m3, j3-m3]
     nume = [j1+j2+j3+1, j1-m1, j1+m1, j2-m2, j2+m2]
     for i in deno:
@@ -66,11 +69,11 @@ if __name__ == "__main__":
     lis = input("such as l1, l2 ,... , lp:")
     lis = lis.split(",")
     lis = [int(l) for l in lis]
-    # calculate total sum of m
-    lsum = 1
+    # calculate size of projection matrix and make it
+    plen = 1
     for i in lis:
-        lsum *= 2 * i + 1
-    pmat = np.zeros((lsum, lsum))
+        plen *= 2 * i + 1
+    pmat = np.zeros((plen, plen))
     # division to cases
     if len(lis) == 2 and lis[0] == lis[1]:
         id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1)))
@@ -80,6 +83,7 @@ if __name__ == "__main__":
                 if cm[0] == -cm[1] and rm[0] == -rm[1]:
                     pmat[mid[cm], mid[rm]] = (-1)**(cm[1]-rm[1])/(2*lis[0]+1)
     elif len(lis) == 2 and lis[0] != lis[1]:
+        # notification and end of system
         print("Projection matrix equals to zero matrix")
         sys.exit(0)
     if len(lis) == 3:
@@ -91,7 +95,6 @@ if __name__ == "__main__":
                 c1 = my_clebsch(lis[0], lis[1], lis[2], cm[0], cm[1], -cm[2])
                 c2 = my_clebsch(lis[0], lis[1], lis[2], rm[0], rm[1], -rm[2])
                 pmat[mid[cm], mid[rm]] = (-1)**(cm[2]-rm[2])/(2*lis[2]+1)*c1*c2
-        pmat = pmat.astype(np.float64)
     if len(lis) == 4:
         id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
                                range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1)))
@@ -106,7 +109,6 @@ if __name__ == "__main__":
                     c4 = my_clebsch(lis[2], l, lis[3], rm[2], rm[0]+rm[1], -rm[3])
                     p += (-1)**(rm[3]-cm[3])/(2*lis[3]+1)*c1*c2*c3*c4
                 pmat[mid[cm], mid[rm]] = p
-        pmat = pmat.astype(np.float64)
     if len(lis) == 5:
         id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
                                range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1),
@@ -125,7 +127,6 @@ if __name__ == "__main__":
                         c6 = my_clebsch(lis[3], L, lis[4], rm[3], rm[0]+rm[1]+rm[2], -rm[4])
                         p += (-1)**(cm[4]-rm[4])*1/(2*lis[4]+1)*c1*c2*c3*c4*c5*c6
                 pmat[mid[cm], mid[rm]] = p
-        pmat = pmat.astype(np.float64)
     if len(lis) == 6:
         id_list = list(product(range(-lis[0], lis[0]+1), range(-lis[1], lis[1]+1),
                                range(-lis[2], lis[2]+1), range(-lis[3], lis[3]+1),
@@ -151,7 +152,6 @@ if __name__ == "__main__":
                                             rm[0]+rm[1]+rm[2]+rm[3], -rm[5])
                             p += (-1)**(cm[5]-rm[5])*1/(2*lis[5]+1)*c1*c2*c3*c4*c5*c6*c7*c8
                 pmat[mid[cm], mid[rm]] = p
-        pmat = pmat.astype(np.float64)
     # calculate eigenvalue and eigenvector
     # insert debugger
     # import pdb
@@ -160,10 +160,15 @@ if __name__ == "__main__":
     evecs = eig[1][:, np.isclose(eig[0], 1)]
     if np.any(evecs):
         print(evecs)
-        a = np.where(np.isclose(evecs, 0))
-        zeros = list(zip(a[0], a[1]))
-        rn = evecs.shape[1]
-        ind = list(product(range(lsum), range(rn)))
+        plc = np.where(np.isclose(evecs, 0))
+        zeros = list(zip(plc[0], plc[1]))
+        rlen = evecs.shape[1]
+        ind = list(product(range(plen), range(rlen)))
         for i in zeros:
             ind.remove(i)
-        print(ind)
+        ind = [i for i in ind if i[1] == 0]
+        non_zero = [k for k, v in mid.items() for i in ind if v == i[0]]
+        a = list(zip(non_zero, evecs[[mid[i] for i in non_zero], 0]))
+        print(a)
+    else:
+        print("Projection matrix has no eigen vector whose eigen value is 1.")
