@@ -160,3 +160,10 @@ if __name__ == "__main__":
     evecs = eig[1][:, np.isclose(eig[0], 1)]
     if np.any(evecs):
         print(evecs)
+        a = np.where(np.isclose(evecs, 0))
+        zeros = list(zip(a[0], a[1]))
+        rn = evecs.shape[1]
+        ind = list(product(range(lsum), range(rn)))
+        for i in zeros:
+            ind.remove(i)
+        print(ind)
