@@ -1,9 +1,9 @@
-'''
+"""
 Program to compute rotational invariants of SO3 group by using
 projection operator method
 This deals with only spherical harmonics, but may be improved
 in order to use other functions as basis functions in the near future
-'''
+"""
 
 # set python interpreter(2 or 3 ?)
 # !/usr/bin/env/python
@@ -21,15 +21,23 @@ import numpy as np
 # from sympy.physics.wigner import clebsch_gordan as my_clebsch
 
 def my_clebsch(j1, j2, j3, m1, m2, m3):
-    '''
-    Docstring:
-    my_clebsch(j1, j2, j3, m1, m2, m3)
+    """Calculate clebsch gordan coefficient from input arguments
 
-    Calculate clebsch_gordan coefficient from input arguments.
+    Args:
+        j1 (int): angular momentum of eigenstate
+        j2 (int): angular momentum of eigenstate
+        j3 (int): angular momentum after coupling
+        m1 (int): projection angular momentum of eigenstate
+        m2 (int): projection angular momentum of eigenstate
+        m3 (int): projection angular momentum after coupling
+
+    Returns:
+        float: clebsch gordan coefficient
+
     Sympy is the module to use symbolic algebra, so its behavior is too slow
     when using high order matrix.
     When only the result value is needed, this function is useful.
-    '''
+    """
     # kronecker's delta item
     if m1 + m2 != m3:
         return 0
@@ -64,12 +72,15 @@ def my_clebsch(j1, j2, j3, m1, m2, m3):
     return cf * csum
 
 def mkpair(evecs, mid):
-    '''
-    docstring:
-    mkpair(evecs)
+    """Return the pair of eigen vector and key of hashed array
 
-    Return the pair of eigen vector and key of hashed array.
-    '''
+    Args:
+        evecs (ndarray): eigen vector whose eigenvalue is 1
+        mid (dict): return index from quantum numbers
+
+    Returns:
+        list: pair of quantum number set and eigen vector components
+    """
     # make the indices list of evecs
     rlen = evecs.shape[1]
     ind = list(product(range(plen), range(rlen)))

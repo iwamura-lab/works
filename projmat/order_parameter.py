@@ -1,6 +1,6 @@
-'''
+"""
 Program to calculate order parameters when selecting spherical harmonics as basis
-'''
+"""
 # set python interpreter(2 or 3 ?)
 # !/usr/bin/python3
 # -*- coding: UTF-8 -*-
@@ -73,7 +73,7 @@ def calc_order_parameter(poscar, l, m, cut_off, params):
     return np.conj(results)
 
 if __name__ == "__main__":
-    PATH = (input("Enter the PATH of POSCAR file.:"))
+    PATH = "dataset/O1Zn1_CONTCAR"
     n1 = int(input("Enter the azimuthal quantum number.:"))
     n2 = int(input("Enter the magnetic quantum number.:"))
     cr = float(input("Enter the cut-off radius.:"))
@@ -81,4 +81,3 @@ if __name__ == "__main__":
     rpar["center"] = float(input("Enter the central position of radial function.:"))
     rpar["height"] = float(input("Enter the height of radial function.:"))
     print(calc_order_parameter(PATH, n1, n2, cr, rpar))
-        
