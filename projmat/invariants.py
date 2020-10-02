@@ -63,6 +63,30 @@ def my_clebsch(j1, j2, j3, m1, m2, m3):
                  (factorial(v)*factorial(j3-j1+j2-v)*factorial(j3+m3-v)*factorial(v+j1-j2-m3)))
     return cf * csum
 
+def mkpair(evecs, mid):
+    '''
+    docstring:
+    mkpair(evecs)
+
+    Return the pair of eigen vector and key of hashed array.
+    '''
+    # make the indices list of evecs
+    rlen = evecs.shape[1]
+    ind = list(product(range(plen), range(rlen)))
+    # make the indices list of zero components
+    plc = np.where(np.isclose(evecs, 0))
+    zeros = list(zip(plc[0], plc[1]))
+    # get the indices list of non zero components from former lists
+    for i in zeros:
+        ind.remove(i)
+    # sort ind to the same row number as evecs
+    coef = [[i for i in ind if i[1] == j] for j in range(rlen)]
+    # get the keys corresponding to the values, ndarray indices of evecs
+    non_zero = [[k for i in coef[j] for k, v in mid.items() if v == i[0]] for j in range(rlen)]
+    # link keys with eigen vectors
+    co_val = [list(zip(non_zero[j], evecs[[mid[i] for i in non_zero[j]], j])) for j in range(rlen)]
+    return co_val
+
 if __name__ == "__main__":
     # get the l list
     print("Enter the azimuthal quantum number list of seed functions")
@@ -159,16 +183,7 @@ if __name__ == "__main__":
     eig = np.linalg.eig(pmat)
     evecs = eig[1][:, np.isclose(eig[0], 1)]
     if np.any(evecs):
-        print(evecs)
-        plc = np.where(np.isclose(evecs, 0))
-        zeros = list(zip(plc[0], plc[1]))
-        rlen = evecs.shape[1]
-        ind = list(product(range(plen), range(rlen)))
-        for i in zeros:
-            ind.remove(i)
-        ind = [i for i in ind if i[1] == 0]
-        non_zero = [k for k, v in mid.items() for i in ind if v == i[0]]
-        a = list(zip(non_zero, evecs[[mid[i] for i in non_zero], 0]))
-        print(a)
+        co_val = mkpair(evecs, mid)
+        print(co_val)
     else:
         print("Projection matrix has no eigen vector whose eigen value is 1.")
