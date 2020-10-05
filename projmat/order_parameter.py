@@ -23,8 +23,7 @@ def calc_sph_harm(sph_indices, phi, theta):
     to physicists, there was urgent necessity to modify.
     """
 
-    sph_indices.reverse()
-    return sp.sph_harm(sph_indices[0], sph_indices[1], phi, theta)
+    return sp.sph_harm(sph_indices[1], sph_indices[0], phi, theta)
 
 
 def calc_order_parameter(poscar, l, m, cut_off, params):
