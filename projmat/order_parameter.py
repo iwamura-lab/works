@@ -77,11 +77,20 @@ def calc_opl(poscar, lmax, cut_off, params):
 
     Returns:
         list: order parameter centered at atoms in unit cell
+        float: cut_off radius
     """
 
     # get information of atomic positions by reading POSCAR file
     _structure = mg.Structure.from_str(open(poscar).read(), fmt="poscar")
     atom_sites = _structure.sites
+    for each_site in atom_sites:
+        for opsite in atom_sites:
+            if each_site != opsite:
+                dist = each_site.distance(opsite)
+                if dist < cut_off:
+                    cut_off = dist
+    cut_off += (cut_off + 0.5) * 2
+
     # prepare data structure
     res = []
 
@@ -96,16 +105,15 @@ def calc_opl(poscar, lmax, cut_off, params):
             # make the list of order parameters
             al.append(a)
         res.append(al)
-    return res
+    return res, cut_off
 
 if __name__ == "__main__":
     # get the path of files included in dataset
     poscars = os.listdir("/home/taiki/works/dataset")
     lmax = 3
-    cr = 2.8
+    cr = 100
     rpar = {"center": 0.0, "height": 1.0}
     for path in poscars:
-        # lmax = int(input("Enter the maximum of azimuthal quantum number.:"))
-        # cr = float(input("Enter the cut-off radius.:"))
-        opl = calc_opl("dataset/"+path, lmax, cr, rpar)
-        pickle.dump(opl, open("results/"+path+".dump", "wb"))
+        opl, cut_off = calc_opl("dataset/"+path, lmax, cr, rpar)
+        opl.append(cut_off)
+        pickle.dump(opl, open("results/lmax3/"+path+".dump", "wb"))
