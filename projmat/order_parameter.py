@@ -111,9 +111,9 @@ if __name__ == "__main__":
     # get the path of files included in dataset
     poscars = os.listdir("/home/taiki/works/dataset")
     lmax = 3
-    cr = 100
     rpar = {"center": 0.0, "height": 1.0}
     for path in poscars:
+        cr = 100
         opl, cut_off = calc_opl("dataset/"+path, lmax, cr, rpar)
         opl.append(cut_off)
         pickle.dump(opl, open("results/lmax3/"+path+".dump", "wb"))
