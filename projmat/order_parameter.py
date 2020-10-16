@@ -109,7 +109,7 @@ def calc_opl(poscar, lmax, cut_off, params):
 
 if __name__ == "__main__":
     # get the path of files included in dataset
-    poscars = os.listdir("/home/taiki/works/dataset")
+    poscars = os.listdir("dataset")
     lmax = 3
     rpar = {"center": 0.0, "height": 1.0}
     for path in poscars:
