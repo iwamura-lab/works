@@ -112,8 +112,9 @@ if __name__ == "__main__":
     poscars = os.listdir("dataset")
     lmax = 3
     rpar = {"center": 0.0, "height": 1.0}
-    for path in poscars:
+    for i, path in enumerate(poscars):
         cr = 100
         opl, cut_off = calc_opl("dataset/"+path, lmax, cr, rpar)
         opl.append(cut_off)
         pickle.dump(opl, open("results/lmax3/"+path+".dump", "wb"))
+        print(i+1)
