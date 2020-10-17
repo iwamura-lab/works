@@ -7,6 +7,7 @@ Program to calculate order parameters when selecting spherical harmonics as basi
 
 # import standard modules
 import os
+import itertools
 import pickle
 
 # import modules including mathematical functions
@@ -83,12 +84,12 @@ def calc_opl(poscar, lmax, cut_off, params):
     # get information of atomic positions by reading POSCAR file
     _structure = mg.Structure.from_str(open(poscar).read(), fmt="poscar")
     atom_sites = _structure.sites
-    for each_site in atom_sites:
-        for opsite in atom_sites:
-            if each_site != opsite:
-                dist = each_site.distance(opsite)
-                if dist < cut_off:
-                    cut_off = dist
+    # make the iterator which returns all combinations of atom_sites
+    pairs = itertools.combinations(atom_sites, 2)
+    for pair in pairs:
+        dist = pair[0].distance(pair[1])
+        if dist < cut_off:
+            cut_off = dist
     cut_off += (cut_off + 0.5) * 2
 
     # prepare data structure
