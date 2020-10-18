@@ -90,7 +90,7 @@ def calc_opl(poscar, lmax, cut_off, params):
         dist = pair[0].distance(pair[1])
         if dist < cut_off:
             cut_off = dist
-    cut_off += (cut_off + 0.5) * 2
+    cut_off = (cut_off + 0.5) * 2
 
     # prepare data structure
     res = []
@@ -111,11 +111,13 @@ def calc_opl(poscar, lmax, cut_off, params):
 if __name__ == "__main__":
     # get the path of files included in dataset
     poscars = os.listdir("dataset")
+    # set some values to the parameters
     lmax = 3
     rpar = {"center": 0.0, "height": 1.0}
-    for i, path in enumerate(poscars):
+    for cnt, path in enumerate(poscars):
+        # reset cut-off radius
         cr = 100
         opl, cut_off = calc_opl("dataset/"+path, lmax, cr, rpar)
         opl.append(cut_off)
         pickle.dump(opl, open("results/lmax3/"+path+".dump", "wb"))
-        print(i+1)
+        print(cnt+1)
