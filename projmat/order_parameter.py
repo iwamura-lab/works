@@ -7,6 +7,7 @@ Program to calculate order parameters when selecting spherical harmonics as basi
 
 # import standard modules
 import os
+from math import sqrt, factorial
 import itertools
 import pickle
 
@@ -16,6 +17,36 @@ import numpy as np
 
 # import modules related to materialsProject
 import pymatgen as mg
+
+def sph_harm_R(phi, theta, l, m):
+    """Return real part of spherical harmonics
+
+    Args:
+        phi (float): azimuthal angle
+        theta (float): polar angle
+        l (int): azimuthal quantum number
+        m (int): magnetic quantum number
+
+    Returns:
+        float: real part of sph_harm(real number)
+    """
+    coef = sqrt(((2*l+1)*factorial(l-m))/(4*np.pi*factorial(l+m)))
+    return coef * np.cos(m * phi) * sp.lpmv(m, l, np.cos(theta))
+
+def sph_harm_I(phi, theta, l, m):
+    """Return imaginary part of spherical harmonics
+
+    Args:
+        phi (float): azimuthal angle
+        theta (float): polar angle
+        l (int): azimuthal quantum number
+        m (int): magnetic quantum number
+
+    Returns:
+        float: imaginary part of sph_harm(real number)
+    """
+    coef = sqrt(((2*l+1)*factorial(l-m))/(4*np.pi*factorial(l+m)))
+    return coef * np.sin(m * phi) * sp.lpmv(m, l, np.cos(theta))
 
 def calc_order_parameter(_structure, each_site, quantum, cut_off, params):
     """Calculate order parameter
