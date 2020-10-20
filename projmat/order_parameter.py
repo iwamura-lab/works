@@ -13,6 +13,7 @@ import pickle
 
 # import modules including mathematical functions
 import scipy.special as sp
+from scipy.integrate import tplquad
 import numpy as np
 
 # import modules related to materialsProject
@@ -30,6 +31,7 @@ def sph_harm_R(phi, theta, l, m):
     Returns:
         float: real part of sph_harm(real number)
     """
+
     coef = sqrt(((2*l+1)*factorial(l-m))/(4*np.pi*factorial(l+m)))
     return coef * np.cos(m * phi) * sp.lpmv(m, l, np.cos(theta))
 
@@ -45,6 +47,7 @@ def sph_harm_I(phi, theta, l, m):
     Returns:
         float: imaginary part of sph_harm(real number)
     """
+
     coef = sqrt(((2*l+1)*factorial(l-m))/(4*np.pi*factorial(l+m)))
     return coef * np.sin(m * phi) * sp.lpmv(m, l, np.cos(theta))
 
@@ -59,6 +62,7 @@ def gaussian(x, mu, sigma):
     Returns:
         float: result of calculation
     """
+
     return np.exp(-(x - mu)**2/(2*sigma**2))
 
 def a_int_R(r, theta, phi, qnum, cut_off, mu):
@@ -75,6 +79,7 @@ def a_int_R(r, theta, phi, qnum, cut_off, mu):
     Returns:
         float: integrand
     """
+
     # set a value to sigma
     sigma = 8.5 * 10**(-3)
     # calculate cartesian coordinates from polar coordinates
@@ -93,6 +98,39 @@ def a_int_R(r, theta, phi, qnum, cut_off, mu):
     sph = sph_harm_R(phi, theta, qnum[0], qnum[1]) * r**2 * np.sin(theta)
     return coef * fx * fy * fz * radial * sph
 
+def a_int_I(r, theta, phi, qnum, cut_off, mu):
+    """Return real part of integrand to use scipy.integrate.tplquad
+
+    Args:
+        r (float): radius
+        theta (float): azimuthal angle
+        phi (float): polar angle
+        qnum (list): list of quantum numbers
+        cut_off (float): cut_off radius
+        mu (float): cartesian coordinates of neighboring atom
+
+    Returns:
+        float: integrand
+    """
+
+    # set a value to sigma
+    sigma = 8.5 * 10**(-3)
+    # calculate cartesian coordinates from polar coordinates
+    x = r * np.cos(phi) * np.sin(theta)
+    y = r * np.sin(phi) * np.sin(theta)
+    z = r * np.cos(theta)
+    # calculate density function
+    coef = 1/(sqrt(2*np.pi)*sigma)**3
+    fx = gaussian(x, mu[0], sigma)
+    fy = gaussian(y, mu[1], sigma)
+    fz = gaussian(z, mu[2], sigma)
+    # calculate radial function and spherical harmonics
+    gauss = np.exp(- r**2)
+    func_cut = 0.5 * (np.cos(np.pi * r/cut_off)+1)
+    radial = gauss * func_cut
+    sph = sph_harm_I(phi, theta, qnum[0], qnum[1]) * r**2 * np.sin(theta)
+    return coef * fx * fy * fz * radial * sph
+
 def calc_order_parameter(_structure, each_site, quantum, cut_off, params):
     """Calculate order parameter
 
@@ -107,6 +145,7 @@ def calc_order_parameter(_structure, each_site, quantum, cut_off, params):
     Returns:
         float: order parameter
     """
+
     res = 0.0
     _neighbors = _structure.get_neighbors(each_site, cut_off)
     for neighbor in _neighbors:
@@ -185,6 +224,7 @@ def calc_opl(poscar, lmax, cut_off, params):
     return res, cut_off
 
 if __name__ == "__main__":
+    res = tplquad(a_int_R, 0, 2 * np.pi, lambda phi: 0, lambda phi: np.pi, lambda phi, theta: 0, lambda phi, theta: 2.5, ([1, 1], 2.5, [1.7, 1.5, 1.0]))
     # get the path of files included in dataset
     poscars = os.listdir("dataset")
     # set some values to the parameters
