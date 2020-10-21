@@ -9,6 +9,7 @@ Program to calculate order parameters when selecting spherical harmonics as basi
 import os
 from math import sqrt, factorial
 import itertools
+import shelve
 import pickle
 
 # import modules including mathematical functions
@@ -70,11 +71,11 @@ def a_int_R(r, theta, phi, qnum, cut_off, mu):
 
     Args:
         r (float): radius
-        theta (float): azimuthal angle
-        phi (float): polar angle
-        qnum (list): list of quantum numbers
+        theta (float): polar angle
+        phi (float): azimuthal angle
+        qnum (tuple): tuple of quantum numbers
         cut_off (float): cut_off radius
-        mu (float): cartesian coordinates of neighboring atom
+        mu (list): cartesian coordinates of neighboring atom
 
     Returns:
         float: integrand
@@ -103,11 +104,11 @@ def a_int_I(r, theta, phi, qnum, cut_off, mu):
 
     Args:
         r (float): radius
-        theta (float): azimuthal angle
-        phi (float): polar angle
-        qnum (list): list of quantum numbers
+        theta (float): polar angle
+        phi (float): azimuthal angle
+        qnum (tuple): tuple of quantum numbers
         cut_off (float): cut_off radius
-        mu (float): cartesian coordinates of neighboring atom
+        mu (list): cartesian coordinates of neighboring atom
 
     Returns:
         float: integrand
@@ -223,17 +224,61 @@ def calc_opl(poscar, lmax, cut_off, params):
         res.append(al)
     return res, cut_off
 
+def calc_order_parameter2(poscar, ref_dict, cut_off):
+    """Calculate order parameter when taking approximation of rho(i)
+
+    Args:
+        poscar (poscar): the path of POSCAR file
+        ref_dict (dict): hash dictionary of l and m
+        cut_off (flaot): cut_off radius
+
+    Returns:
+        ndarray: ndarray of order_parameters
+    """
+    _structure = mg.Structure.from_str(open(poscar).read(), fmt="poscar")
+    atom_sites = _structure.sites
+    for i, each_site in enumerate(atom_sites):
+        _neighbors = _structure.get_neighbors(each_site, cut_off)
+        order_parameters = np.array([])
+        for lm in list(ref_dict):
+            a_R = a_I = 0.0
+            for oposite in _neighbors:
+                vec = oposite.coords - each_site.coords
+                a_R += tplquad(a_int_R, 0, 2 * np.pi, lambda phi: 0, lambda phi: np.pi,
+                               lambda phi, theta: 0, lambda phi, theta: cut_off,
+                               (lm, cut_off, vec))[0]
+                if lm[1] != 0:
+                    a_I += tplquad(a_int_I, 0, 2 * np.pi, lambda phi: 0, lambda phi: np.pi,
+                                   lambda phi, theta: 0, lambda phi, theta: cut_off,
+                                   (lm, cut_off, vec))[0]
+            order_parameters = np.append(order_parameters, complex(a_R, a_I))
+        if i == 0:
+            res = order_parameters
+        else:
+            res = np.vstack([res, order_parameters])
+    return res
+
 if __name__ == "__main__":
-    res = tplquad(a_int_R, 0, 2 * np.pi, lambda phi: 0, lambda phi: np.pi, lambda phi, theta: 0, lambda phi, theta: 2.5, ([1, 1], 2.5, [1.7, 1.5, 1.0]))
     # get the path of files included in dataset
     poscars = os.listdir("dataset")
-    # set some values to the parameters
+    # set or get initial values for the parameters
     lmax = 3
-    rpar = {"center": 0.0, "height": 1.0}
-    for cnt, path in enumerate(poscars):
-        # reset cut-off radius
-        cr = 100
-        opl, cut_off = calc_opl("dataset/"+path, lmax, cr, rpar)
-        opl.append(cut_off)
-        pickle.dump(opl, open("results/lmax3/"+path+".dump", "wb"))
-        print(cnt+1)
+    lm_pair = [(l, m) for l in range(lmax+1) for m in range(-l, l+1)]
+    ref_dict = {key: i for i, key in enumerate(lm_pair)}
+    cr_values = shelve.open("results/datacheck/nearest.db")
+    scale = 2
+    # decide which mode will be used
+    mode = 2
+    if mode == 1:
+        for cnt, path in enumerate(poscars):
+            # reset cut-off radius and parameters
+            cr = 100
+            rpar = {"center": 0.0, "height": 1.0}
+            opl, cut_off = calc_opl("dataset/"+path, lmax, cr, rpar)
+            opl.append(cut_off)
+            pickle.dump(opl, open("results/lmax3/"+path+".dump", "wb"))
+            print(cnt+1)
+    elif mode == 2:
+        for cnt, path in enumerate(poscars):
+            res = calc_order_parameter2("dataset/"+path, ref_dict, scale * cr_values[path])
+            print(cnt+1)
