@@ -281,4 +281,6 @@ if __name__ == "__main__":
     elif mode == 2:
         for cnt, path in enumerate(poscars):
             res = calc_order_parameter2("dataset/"+path, ref_dict, scale * cr_values[path])
+            pickle.dump(res, open("results/lmax3/order_parameters/"+path+".dump", "wb"))
             print(cnt+1)
+        pickle.dump(ref_dict, open("results/lmax3/ref_dict.dump", "wb"))
