@@ -83,6 +83,7 @@ def a_int_R(r, theta, phi, qnum, cut_off, mu):
 
     # set a value to sigma
     sigma = 8.5 * 10**(-3)
+    # sigma = 1
     # calculate cartesian coordinates from polar coordinates
     x = r * np.cos(phi) * np.sin(theta)
     y = r * np.sin(phi) * np.sin(theta)
@@ -116,6 +117,7 @@ def a_int_I(r, theta, phi, qnum, cut_off, mu):
 
     # set a value to sigma
     sigma = 8.5 * 10**(-3)
+    # sigma = 1
     # calculate cartesian coordinates from polar coordinates
     x = r * np.cos(phi) * np.sin(theta)
     y = r * np.sin(phi) * np.sin(theta)
@@ -132,44 +134,40 @@ def a_int_I(r, theta, phi, qnum, cut_off, mu):
     sph = sph_harm_I(phi, theta, qnum[0], qnum[1]) * r**2 * np.sin(theta)
     return coef * fx * fy * fz * radial * sph
 
-def calc_order_parameter(_structure, each_site, quantum, cut_off, params):
+def calc_order_parameter(vec, quantum, cut_off, params):
     """Calculate order parameter
 
     Args:
         _structure (Structure): crystal structure in POSCAR format
         each_site (Sites): the position of an atom
         _neighbors (list): neighboring atoms of each_site
-        quantum (list): [l, m]
+        quantum (tuple): (l, m)
         cut_off (float): cut off radius
-        params (dict): {"center": float, "height": float}
+        params (float): the central position of gauss function
 
     Returns:
         float: order parameter
     """
 
     res = 0.0
-    _neighbors = _structure.get_neighbors(each_site, cut_off)
-    for neighbor in _neighbors:
-        # transform cartesian coordinates into polar coordinates
-        vec = neighbor.coords - each_site.coords
-        r = np.linalg.norm(vec)
-        theta = np.arccos(vec[2]/r)
-        phi = np.arccos(vec[0]/(r*np.sin(theta)))
-        if vec[1]/np.sin(theta) < 0:
-            phi = -phi + 2 * np.pi
-        # calculate radial function
-        gauss = np.exp(- params["height"] * ((r - params["center"])**2))
-        func_cut = 0.5 * (np.cos(np.pi * r/cut_off)+1)
-        radial = gauss * func_cut
-        res += radial * calc_sph_harm(quantum, phi, theta)
+    # transform cartesian coordinates into polar coordinates
+    r = np.linalg.norm(vec)
+    theta = np.arccos(vec[2]/r)
+    phi = np.arccos(vec[0]/(r*np.sin(theta)))
+    if vec[1]/np.sin(theta) < 0:
+        phi = -phi + 2 * np.pi
+    # calculate radial function
+    gauss = np.exp(- (r - params)**2)
+    func_cut = 0.5 * (np.cos(np.pi * r/cut_off)+1)
+    radial = gauss * func_cut
+    res += radial * calc_sph_harm(quantum, phi, theta)
     return res.conjugate()
-
 
 def calc_sph_harm(sph_indices, phi, theta):
     """Calculate spherical harmonics under given arguments
 
     Args:
-        sph_indices (list): [l, m]
+        sph_indices (tuple): (l, m)
         phi (float): azimuthal angle
         theta (float): polar angle
 
@@ -182,47 +180,26 @@ def calc_sph_harm(sph_indices, phi, theta):
 
     return sp.sph_harm(sph_indices[1], sph_indices[0], phi, theta)
 
-
-def calc_opl(poscar, lmax, cut_off, params):
+def calc_opl(vec, ref_dict, cut_off, nmax):
     """Calculate multi list of order parameters in using spherical harmonics as basis functions
 
     Args:
-        poscar (POSCAR): the path of POSCAR file(information of atomic positions)
-        lmax (int): maximum azimuthal quantum number
+        vec (float): the distance between a site and neighboring atoms
+        ref_dict (dict): receive pair of quantum number (l, m) and return index(int)
         cut_off (float): cut off radius
-        params (dict): parameters of radial function {center: float, height: float}
+        nmax (dict): maximum of center position in gauss function
 
     Returns:
-        list: order parameter centered at atoms in unit cell
-        float: cut_off radius
+        ndarray: basis function values at the position of a neighboring atom
     """
 
-    # get information of atomic positions by reading POSCAR file
-    _structure = mg.Structure.from_str(open(poscar).read(), fmt="poscar")
-    atom_sites = _structure.sites
-    # make the iterator which returns all combinations of atom_sites
-    pairs = itertools.combinations(atom_sites, 2)
-    for pair in pairs:
-        dist = pair[0].distance(pair[1])
-        if dist < cut_off:
-            cut_off = dist
-    cut_off = (cut_off + 0.5) * 2
-
     # prepare data structure
-    res = []
-
-    # get information of neighboring atoms and calculate order parameters
-    for each_site in atom_sites:
-        # prepare data structure
-        al = []
-        for l in range(lmax+1):
-            a = []
-            for m in range(-l, l+1):
-                a.append(calc_order_parameter(_structure, each_site, [l, m], cut_off, params))
-            # make the list of order parameters
-            al.append(a)
-        res.append(al)
-    return res, cut_off
+    res = np.zeros((nmax+1, len(ref_dict)), dtype=np.complex)
+    # make the iterator
+    seq = itertools.product([i for i in range(nmax+1)], list(ref_dict))
+    for nlm in seq:
+        res[nlm[0], ref_dict[nlm[1]]] = calc_order_parameter(vec, nlm[1], cut_off, nlm[0])
+    return res
 
 def calc_order_parameter2(poscar, ref_dict, cut_off):
     """Calculate order parameter when taking approximation of rho(i)
@@ -262,25 +239,32 @@ if __name__ == "__main__":
     # get the path of files included in dataset
     poscars = os.listdir("dataset")
     # set or get initial values for the parameters
-    lmax = 3
+    lmax = 2
+    nmax = 5
     lm_pair = [(l, m) for l in range(lmax+1) for m in range(-l, l+1)]
     ref_dict = {key: i for i, key in enumerate(lm_pair)}
     cr_values = shelve.open("results/datacheck/nearest.db")
     scale = 2
     # decide which mode will be used
-    mode = 2
+    mode = 1
     if mode == 1:
         for cnt, path in enumerate(poscars):
-            # reset cut-off radius and parameters
-            cr = 100
-            rpar = {"center": 0.0, "height": 1.0}
-            opl, cut_off = calc_opl("dataset/"+path, lmax, cr, rpar)
-            opl.append(cut_off)
-            pickle.dump(opl, open("results/lmax3/"+path+".dump", "wb"))
+            # calculate cut_off radius
+            cut_off = scale * cr_values[path]
+            # get information of atomic positions by reading POSCAR file
+            _structure = mg.Structure.from_str(open("dataset/"+path).read(), fmt="poscar")
+            atom_sites = _structure.sites
+            # get information of neighboring atoms and calculate order parameters
+            for i, each_site in enumerate(atom_sites):
+                res = np.zeros((nmax+1, len(ref_dict)), dtype=np.complex)
+                for oposite in _structure.get_neighbors(each_site, cut_off):
+                    vec = oposite.coords - each_site.coords
+                    res += calc_opl(vec, ref_dict, cut_off, nmax)
+                pickle.dump(res, open("results/delta/lmax2"+path+"_"+str(i+1)+".dump", "wb"))
             print(cnt+1)
     elif mode == 2:
         for cnt, path in enumerate(poscars):
-            res = calc_order_parameter2("dataset/"+path, ref_dict, scale * cr_values[path])
-            pickle.dump(res, open("results/lmax3/order_parameters/"+path+".dump", "wb"))
+            res = calc_order_parameter2("dataset/"+path, ref_dict, cut_off)
+            pickle.dump(res, open("results/normal_dis/order_parameters/lmax2/"+path+".dump", "wb"))
             print(cnt+1)
-        pickle.dump(ref_dict, open("results/lmax3/ref_dict.dump", "wb"))
+        pickle.dump(ref_dict, open("results/normal_dis/order_paramters/ref_dict.dump", "wb"))
