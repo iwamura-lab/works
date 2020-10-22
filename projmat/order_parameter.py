@@ -197,11 +197,21 @@ def calc_opl(vec, ref_dict, cut_off, nmax):
 
     # prepare data structure
     res = np.zeros((nmax+1, len(ref_dict)), dtype=np.complex)
+    # transform cartesian coordinates into polar coordinates
+    r = np.linalg.norm(vec)
+    theta = np.arccos(vec[2]/r)
+    phi = np.arccos(vec[0]/(r*np.sin(theta)))
+    if vec[1]/np.sin(theta) < 0:
+        phi = -phi + 2 * np.pi
+    func_cut = 0.5 * (np.cos(np.pi * r/cut_off)+1)
     # make the iterator
     seq = itertools.product([i for i in range(nmax+1)], list(ref_dict))
     for nlm in seq:
-        res[nlm[0], ref_dict[nlm[1]]] = calc_order_parameter(vec, nlm[1], cut_off, nlm[0])
-    return res
+        # calculate radial function
+        gauss = np.exp(- (r - nlm[0])**2)
+        radial = gauss * func_cut
+        res[nlm[0], ref_dict[nlm[1]]] = radial * calc_sph_harm(nlm[1], phi, theta)
+    return res.conjugate()
 
 def calc_order_parameter2(poscar, ref_dict, cut_off):
     """Calculate order parameter when taking approximation of rho(i)
