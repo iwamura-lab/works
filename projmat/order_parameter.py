@@ -83,7 +83,7 @@ def a_int_R(r, theta, phi, lm, cut_off, mu):
     # set a value to sigma
     # sigma = 8.5 * 10**(-3)
     # sigma = 0.1
-    sigma = 1
+    sigma = 0.5
     # calculate cartesian coordinates from polar coordinates
     x = r * np.cos(phi) * np.sin(theta)
     y = r * np.sin(phi) * np.sin(theta)
@@ -94,7 +94,7 @@ def a_int_R(r, theta, phi, lm, cut_off, mu):
     fy = gaussian(y, mu[1], sigma)
     fz = gaussian(z, mu[2], sigma)
     # calculate radial function and spherical harmonics
-    gauss = np.exp(- (r-3)**2)
+    gauss = np.exp(- (r-4)**2)
     func_cut = 0.5 * (np.cos(np.pi * r/cut_off)+1)
     radial = gauss * func_cut
     sph = sph_harm_R(phi, theta, lm[0], lm[1]) * r**2 * np.sin(theta)
@@ -118,7 +118,7 @@ def a_int_I(r, theta, phi, lm, cut_off, mu):
     # set a value to sigma
     # sigma = 8.5 * 10**(-3)
     # sigma = 0.1
-    sigma = 1
+    sigma = 0.5
     # calculate cartesian coordinates from polar coordinates
     x = r * np.cos(phi) * np.sin(theta)
     y = r * np.sin(phi) * np.sin(theta)
@@ -129,7 +129,7 @@ def a_int_I(r, theta, phi, lm, cut_off, mu):
     fy = gaussian(y, mu[1], sigma)
     fz = gaussian(z, mu[2], sigma)
     # calculate radial function and spherical harmonics
-    gauss = np.exp(- (r-3)**2)
+    gauss = np.exp(- (r-4)**2)
     func_cut = 0.5 * (np.cos(np.pi * r/cut_off)+1)
     radial = gauss * func_cut
     sph = sph_harm_I(phi, theta, lm[0], lm[1]) * r**2 * np.sin(theta)
@@ -249,7 +249,8 @@ if __name__ == "__main__":
                 for oposite in _structure.get_neighbors(each_site, cut_off):
                     vec = oposite.coords - each_site.coords
                     res += calc_order_parameter2(vec, ref_dict, cut_off)
-                dump_path = "results/normal_dis/order_parameters/lmax2/"+path+"_"+str(i+1)+".dump"
+                dump_path = ("results/normal_dis/order_parameters/test/sigma_5e-1/"+
+                             path+"_"+str(i+1)+".dump")
                 pickle.dump(res, open(dump_path, "wb"))
             print(cnt+1)
-        pickle.dump(ref_dict, open("results/normal_dis/order_paramters/ref_dict.dump", "wb"))
+        pickle.dump(ref_dict, open("results/normal_dis/order_parameters/ref_dict.dump", "wb"))
