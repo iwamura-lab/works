@@ -6,6 +6,7 @@ Program to calculate order parameters when selecting spherical harmonics as basi
 # -*- coding: UTF-8 -*-
 
 # import standard modules
+import os
 from math import sqrt, factorial
 import itertools
 import shelve
@@ -65,14 +66,14 @@ def gaussian(x, mu, sigma):
 
     return np.exp(-(x - mu)**2/(2 * sigma**2))
 
-def a_int_R(r, theta, phi, lm, cut_off, mu):
+def a_int_R(r, theta, phi, nlm, cut_off, mu):
     """Return real part of integrand to use scipy.integrate.tplquad
 
     Args:
         r (float): radius
         theta (float): polar angle
         phi (float): azimuthal angle
-        lm (tuple): tuple of quantum numbers (l, m)
+        nlm (tuple): tuple of center and tuple of quantum numbers (l, m)
         cut_off (float): cut_off radius
         mu (list): cartesian coordinates of neighboring atom
 
@@ -94,20 +95,20 @@ def a_int_R(r, theta, phi, lm, cut_off, mu):
     fy = gaussian(y, mu[1], sigma)
     fz = gaussian(z, mu[2], sigma)
     # calculate radial function and spherical harmonics
-    gauss = np.exp(- (r-4)**2)
+    gauss = np.exp(- (r-nlm[0])**2)
     func_cut = 0.5 * (np.cos(np.pi * r/cut_off)+1)
     radial = gauss * func_cut
-    sph = sph_harm_R(phi, theta, lm[0], lm[1]) * r**2 * np.sin(theta)
+    sph = sph_harm_R(phi, theta, nlm[1][0], nlm[1][1]) * r**2 * np.sin(theta)
     return coef * fx * fy * fz * radial * sph
 
-def a_int_I(r, theta, phi, lm, cut_off, mu):
+def a_int_I(r, theta, phi, nlm, cut_off, mu):
     """Return imaginary part of integrand to use scipy.integrate.tplquad
 
     Args:
         r (float): radius
         theta (float): polar angle
         phi (float): azimuthal angle
-        lm (tuple): tuple of center and tuple of quantum numbers (l, m)
+        nlm (tuple): tuple of center and tuple of quantum numbers (l, m)
         cut_off (float): cut_off radius
         mu (list): cartesian coordinates of neighboring atom
 
@@ -129,10 +130,10 @@ def a_int_I(r, theta, phi, lm, cut_off, mu):
     fy = gaussian(y, mu[1], sigma)
     fz = gaussian(z, mu[2], sigma)
     # calculate radial function and spherical harmonics
-    gauss = np.exp(- (r-4)**2)
+    gauss = np.exp(- (r-nlm[0])**2)
     func_cut = 0.5 * (np.cos(np.pi * r/cut_off)+1)
     radial = gauss * func_cut
-    sph = sph_harm_I(phi, theta, lm[0], lm[1]) * r**2 * np.sin(theta)
+    sph = sph_harm_I(phi, theta, nlm[1][0], nlm[1][1]) * r**2 * np.sin(theta)
     return coef * fx * fy * fz * radial * sph
 
 def calc_sph_harm(sph_indices, phi, theta):
@@ -185,7 +186,7 @@ def calc_order_parameter(vec, ref_dict, cut_off, nmax):
         res[nlm[0], ref_dict[nlm[1]]] = radial * calc_sph_harm(nlm[1], phi, theta)
     return res.conjugate()
 
-def calc_order_parameter2(vec, ref_dict, cut_off):
+def calc_order_parameter2(vec, ref_dict, cut_off, nmax):
     """Calculate order parameter when approximating rho(i) by normal distribution
 
     Args:
@@ -197,23 +198,24 @@ def calc_order_parameter2(vec, ref_dict, cut_off):
         ndarray: ndarray of order_parameters
     """
     # prepare data structure
-    res = np.zeros((1, len(ref_dict)), dtype=np.complex)
-    for lm in list(ref_dict):
+    res = np.zeros((nmax+1, len(ref_dict)), dtype=np.complex)
+    seq = itertools.product([i for i in range(nmax+1)], list(ref_dict))
+    for nlm in seq:
         a_R = a_I = 0.0
         a_R = tplquad(a_int_R, 0, 2 * np.pi, lambda phi: 0, lambda phi: np.pi,
                        lambda phi, theta: 0, lambda phi, theta: cut_off,
-                       (lm, cut_off, vec))[0]
+                       (nlm, cut_off, vec))[0]
         # imaginary part of sph_harm equals to 0 when lm[1] = 0, so
-        if lm[1] != 0:
+        if nlm[1][1] != 0:
             a_I = tplquad(a_int_I, 0, 2 * np.pi, lambda phi: 0, lambda phi: np.pi,
                          lambda phi, theta: 0, lambda phi, theta: cut_off,
-                         (lm, cut_off, vec))[0]
-        res[0, ref_dict[lm]] = complex(a_R, -a_I)
+                         (nlm, cut_off, vec))[0]
+        res[nlm[0], ref_dict[nlm[1]]] = complex(a_R, -a_I)
     return res
 
 if __name__ == "__main__":
     # get the path of files included in dataset
-    poscars = ["poscar-90166"]
+    poscars = os.listdir("dataset")
     # set or get initial values for the parameters
     lmax = 2
     nmax = 5
@@ -245,11 +247,11 @@ if __name__ == "__main__":
             # get information of atomic positions by reading POSCAR file
             _structure = mg.Structure.from_str(open("dataset/"+path).read(), fmt="poscar")
             atom_sites = _structure.sites
-            for i, each_site in enumerate(atom_sites[:1]):
-                res = np.zeros((1, len(ref_dict)), dtype=np.complex)
+            for i, each_site in enumerate(atom_sites):
+                res = np.zeros((nmax+1, len(ref_dict)), dtype=np.complex)
                 for oposite in _structure.get_neighbors(each_site, cut_off):
                     vec = oposite.coords - each_site.coords
-                    res += calc_order_parameter2(vec, ref_dict, cut_off)
+                    res += calc_order_parameter2(vec, ref_dict, cut_off, nmax)
                 dump_path = ("results/normal_dis/order_parameters/test/sigma_1e-1/"+
                              path+"_"+str(i+1)+".dump")
                 pickle.dump(res, open(dump_path, "wb"))
