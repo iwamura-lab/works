@@ -82,8 +82,8 @@ def a_int_R(r, theta, phi, lm, cut_off, mu):
 
     # set a value to sigma
     # sigma = 8.5 * 10**(-3)
-    # sigma = 0.1
-    sigma = 1
+    sigma = 0.1
+    # sigma = 0.21
     # calculate cartesian coordinates from polar coordinates
     x = r * np.cos(phi) * np.sin(theta)
     y = r * np.sin(phi) * np.sin(theta)
@@ -94,7 +94,7 @@ def a_int_R(r, theta, phi, lm, cut_off, mu):
     fy = gaussian(y, mu[1], sigma)
     fz = gaussian(z, mu[2], sigma)
     # calculate radial function and spherical harmonics
-    gauss = np.exp(- (r-3)**2)
+    gauss = np.exp(- (r-4)**2)
     func_cut = 0.5 * (np.cos(np.pi * r/cut_off)+1)
     radial = gauss * func_cut
     sph = sph_harm_R(phi, theta, lm[0], lm[1]) * r**2 * np.sin(theta)
@@ -117,8 +117,8 @@ def a_int_I(r, theta, phi, lm, cut_off, mu):
 
     # set a value to sigma
     # sigma = 8.5 * 10**(-3)
-    # sigma = 0.1
-    sigma = 1
+    sigma = 0.1
+    # sigma = 0.21
     # calculate cartesian coordinates from polar coordinates
     x = r * np.cos(phi) * np.sin(theta)
     y = r * np.sin(phi) * np.sin(theta)
@@ -129,7 +129,7 @@ def a_int_I(r, theta, phi, lm, cut_off, mu):
     fy = gaussian(y, mu[1], sigma)
     fz = gaussian(z, mu[2], sigma)
     # calculate radial function and spherical harmonics
-    gauss = np.exp(- (r-3)**2)
+    gauss = np.exp(- (r-4)**2)
     func_cut = 0.5 * (np.cos(np.pi * r/cut_off)+1)
     radial = gauss * func_cut
     sph = sph_harm_I(phi, theta, lm[0], lm[1]) * r**2 * np.sin(theta)
@@ -156,7 +156,7 @@ def calc_order_parameter(vec, ref_dict, cut_off, nmax):
     """Return ndarray of order parameters in using spherical harmonics as basis functions
 
     Args:
-        vec (float): the distance between a site and neighboring atoms
+        vec (float): the distance between a site and neighboring atom
         ref_dict (dict): receive pair of quantum number (l, m) and return index(int)
         cut_off (float): cut off radius
         nmax (dict): maximum of center position in gaussian function
@@ -164,7 +164,7 @@ def calc_order_parameter(vec, ref_dict, cut_off, nmax):
     Returns:
         ndarray: basis function values at the position of a neighboring atom
 
-    In this case, neighboring atomic density is formulated by using delta function.
+    In this case, neighboring atomic density is formulated by delta function.
     """
 
     # prepare data structure
@@ -186,10 +186,10 @@ def calc_order_parameter(vec, ref_dict, cut_off, nmax):
     return res.conjugate()
 
 def calc_order_parameter2(vec, ref_dict, cut_off):
-    """Calculate order parameter when taking approximation of rho(i)
+    """Calculate order parameter when approximating rho(i) by normal distribution
 
     Args:
-        vec (list): the distance between a site and neighboring atoms
+        vec (list): the distance between a site and neighboring atom
         ref_dict (dict): receive pair of quantum number (l, m) and return index(int)
         cut_off (flaot): cut_off radius
 
@@ -203,6 +203,7 @@ def calc_order_parameter2(vec, ref_dict, cut_off):
         a_R = tplquad(a_int_R, 0, 2 * np.pi, lambda phi: 0, lambda phi: np.pi,
                        lambda phi, theta: 0, lambda phi, theta: cut_off,
                        (lm, cut_off, vec))[0]
+        # imaginary part of sph_harm equals to 0 when lm[1] = 0, so
         if lm[1] != 0:
             a_I = tplquad(a_int_I, 0, 2 * np.pi, lambda phi: 0, lambda phi: np.pi,
                          lambda phi, theta: 0, lambda phi, theta: cut_off,
@@ -249,7 +250,8 @@ if __name__ == "__main__":
                 for oposite in _structure.get_neighbors(each_site, cut_off):
                     vec = oposite.coords - each_site.coords
                     res += calc_order_parameter2(vec, ref_dict, cut_off)
-                dump_path = "results/normal_dis/order_parameters/lmax2/"+path+"_"+str(i+1)+".dump"
+                dump_path = ("results/normal_dis/order_parameters/test/sigma_1e-1/"+
+                             path+"_"+str(i+1)+".dump")
                 pickle.dump(res, open(dump_path, "wb"))
             print(cnt+1)
-        pickle.dump(ref_dict, open("results/normal_dis/order_paramters/ref_dict.dump", "wb"))
+        pickle.dump(ref_dict, open("results/normal_dis/order_parameters/ref_dict.dump", "wb"))
