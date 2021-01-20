@@ -1,6 +1,6 @@
 .vscode/
 /dataset/
-/projection/
+/inherited/
 __pycache__
 /pylintrc
 /POSCAR
