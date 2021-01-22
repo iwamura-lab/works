@@ -1,0 +1,9 @@
+.vscode/
+/dataset/
+/inherited/
+__pycache__
+/pylintrc
+/POSCAR
+/results/
+/venv/
+/workspace.code-workspace
