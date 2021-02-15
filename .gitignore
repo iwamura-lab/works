@@ -1,10 +1,5 @@
 .vscode/
-/dataset/
-/inherited/
 __pycache__
-/pylintrc
-/POSCAR
+__init__.py
 /results/
-/venv/
 /workspace.code-workspace
-/experiment/
