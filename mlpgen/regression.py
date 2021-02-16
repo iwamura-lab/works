@@ -3,12 +3,12 @@
 Program to execute the regression of mlp about paramagnetic FCC Fe
 """
 
-# import modules to add functions
-import tqdm
+# import modules to test
 import time
 
 # import standard modules
 import argparse
+import tqdm
 import numpy as np
 
 # from mlptools import some modules
@@ -20,6 +20,19 @@ class TrainStructure:
     def __init__(self, fnames:str, with_force, weight):
         self.vasprun_array = [Vasprun(vasp_path) for ref_file in fnames \
                               for vasp_path in tqdm.tqdm(np.loadtxt(ref_file, dtype=str)[:, 1])]
+        self.e_array = [v.get_energy() for v in self.vasprun_array]
+        self.f_array = [np.ravel(v.get_forces(), order='F') for v in self.vasprun_array]
+        self.axis_array = [v.get_structure()[0] for v in self.vasprun_array]
+        self.pos_array = [v.get_structure()[1] for v in self.vasprun_array]
+        self.atmn_array = [v.get_structure()[2] for v in self.vasprun_array]
+        self.vol_array = [v.get_structure()[3] for v in self.vasprun_array]
+        self.elm_array = [v.get_structure()[4] for v in self.vasprun_array]
+        self.type_array = [v.get_structure()[5] for v in self.vasprun_array]
+        s_array = [self.extract_s(v.get_stress)]
+
+    def extract_s(self, s:StressTensor):
+        return [s[0][0], s[1][1], s[2][2], s[0][1], s[1][2], s[2][0]]
+
 
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
