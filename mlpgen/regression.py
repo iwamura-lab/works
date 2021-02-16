@@ -3,12 +3,12 @@
 Program to execute the regression of mlp about paramagnetic FCC Fe
 """
 
-# import modules to add functions
-import tqdm
+# import modules to test
 import time
 
 # import standard modules
 import argparse
+import tqdm
 import numpy as np
 
 # from mlptools import some modules
@@ -18,8 +18,8 @@ from mlptools.mlpgen.io import ReadFeatureParams
 
 class TrainStructure:
     def __init__(self, fnames:str, with_force, weight):
-        self.vasprun_array = [Vasprun(vasp_path) for ref_file in fnames \
-                              for vasp_path in tqdm.tqdm(np.loadtxt(ref_file, dtype=str)[:, 1])]
+        paths = [np.loadtxt(ref_file, dtype=str) for ref_file in fnames]
+        self.vasprun_array = [Vasprun(vasp_path) for vasp_path in tqdm.tqdm(paths[0][:, 1])]
 
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
