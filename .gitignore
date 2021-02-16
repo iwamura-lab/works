@@ -1,8 +1,6 @@
 .vscode/
-/dataset/
-/inherited/
 __pycache__
-/pylintrc
-/POSCAR
+/results/
+__init__.py
 /results/
 /workspace.code-workspace
