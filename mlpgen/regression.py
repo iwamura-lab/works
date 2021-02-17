@@ -54,7 +54,7 @@ class TrainStructure:
                         for e, st in zip(self.e_array, self.st_array)]
 
     def flat_array(self):
-        """Flaten multi-list in class properties
+        """Flaten multi-list-type class properties
         """
         f_array = copy.deepcopy(self.f_array)
         s_array = copy.deepcopy(self.s_array)
