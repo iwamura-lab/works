@@ -1,4 +1,4 @@
-#!/home/iwamura/mlp-Fe/venv/bin/python
+#!/usr/bin/env python
 """
 Program to execute the regression of mlp about paramagnetic FCC Fe
 """
@@ -7,6 +7,7 @@ Program to execute the regression of mlp about paramagnetic FCC Fe
 import time
 
 # import standard modules
+import copy
 import argparse
 #import tqdm
 import numpy as np
@@ -18,6 +19,8 @@ from mlptools.common.structure import Structure
 from mlptools.mlpgen.io import ReadFeatureParams
 
 class TrainStructure:
+    """Class to store training data structure
+    """
     def __init__(self, fnames:str, with_force, weight):
         vasprun_array = [Vasprun(vasp_path) for ref_file in fnames \
                               for vasp_path in np.loadtxt(ref_file, dtype=str)[:, 1]]
@@ -41,8 +44,22 @@ class TrainStructure:
         """
         return [s[0][0], s[1][1], s[2][2], s[0][1], s[1][2], s[2][0]]
 
+    def correct_energy(self, atom_e):
+        """Correct e_array by using the energy of isolated atoms.
+
+        Args:
+            atom_e (list): isolated atoms energy
+        """
+        self.e_array = [e - np.inner(st.n_atoms, atom_e) \
+                        for e, st in zip(self.e_array, self.st_array)]
+
     def flat_array(self):
-        self.f_array = np.reshape(self.f_array, -1, order='C')
+        """Flaten multi-list in class properties
+        """
+        f_array = copy.deepcopy(self.f_array)
+        s_array = copy.deepcopy(self.s_array)
+        self.f_array = np.reshape(f_array, -1, order='C')
+        self.s_array = np.reshape(s_array, -1, order='C')
 
 
 if __name__ == '__main__' :
@@ -57,5 +74,6 @@ if __name__ == '__main__' :
     start = time.time()
     tr = TrainStructure(di.train_names, di.train_force, di.train_weight)
     tr.flat_array()
+    tr.correct_energy(di.atom_e)
     end = time.time()
     print(str(end-start)+"(s)")

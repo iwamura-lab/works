@@ -1,10 +1,8 @@
+#!/usr/bin/env python
 """
 Program to examine whether it is possible or not to measure the nearest atomic
 distance just by one loop regarding structure datas
 """
-# set python interpreter(2 or 3 ?)
-# !/usr/bin/python3
-# -*- coding: UTF-8 -*-
 
 # import standard modules
 import os

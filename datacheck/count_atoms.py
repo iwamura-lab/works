@@ -1,4 +1,4 @@
-#!/home/iwamura/mlp-Fe/venv/bin python
+#!/usr/bin/env python
 """
 Program to count atoms in POSCAR files
 """

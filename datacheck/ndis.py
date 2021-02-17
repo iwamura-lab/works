@@ -1,9 +1,7 @@
+#!/usr/bin/env python
 """
 Program to get the data of nearest atomic distance regarding structure data
 """
-# set python interpreter(2 or 3 ?)
-# !/usr/bin/python3
-# -*- coding: UTF-8 -*-
 
 # import standard modules
 import os
