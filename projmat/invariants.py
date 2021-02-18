@@ -1,13 +1,10 @@
+#!/usr/bin/env python
 """
 Program to compute rotational invariants of SO3 group by using
 projection operator method
 This deals with only spherical harmonics, but may be improved
 in order to use other functions as basis functions in the near future
 """
-
-# set python interpreter(2 or 3 ?)
-# !/usr/bin/env/python
-# -*- coding: UTF-8 -*-
 
 # import standard modules
 from itertools import product
