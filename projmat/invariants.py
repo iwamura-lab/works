@@ -7,6 +7,7 @@ in order to use other functions as basis functions in the near future
 """
 
 # import standard modules
+import time
 from itertools import product
 import sys
 from math import factorial, sqrt
@@ -46,25 +47,25 @@ def clebsch_gordan(j1, j2, j3, m1, m2, m3):
 
     # determine the range of sum index
     max1 = j2 + j3 + m1
-    max2 = j3 - j1 + j2 # in denominator
-    max3 = j3 + m3 # >=0
-    min1 = m1 - j1 # <=0
+    max2 = j3 - j1 + j2
+    max3 = j3 + m3
+    min1 = m1 - j1
     min2 = j2 - j1 + m3
     vmax = min(max1, max2, max3)
     vmin = max(min1, min2, 0)
-    # make
+
     dfactorial = 1
     for i in denominator:
         dfactorial *= factorial(i)
     nfactorial = 1
     for i in numerator:
         nfactorial *= factorial(i)
-    cf = sqrt((2*j3+1)*dfac / nfac)
-    csum = 0
+    coef = sqrt((2*j3+1)*dfactorial / nfactorial)
+    vsum = 0
     for v in range(vmin, vmax+1):
-        csum += ((-1)**(v+j2+m2)*factorial(j2+j3+m1-v)*factorial(j1-m1+v)/
+        vsum += ((-1)**(v+j2+m2)*factorial(j2+j3+m1-v)*factorial(j1-m1+v)/
                  (factorial(v)*factorial(j3-j1+j2-v)*factorial(j3+m3-v)*factorial(v+j1-j2-m3)))
-    return cf * csum
+    return coef * vsum
 
 def mkpair(evecs, mid):
     """Return the pair of eigen vector and key of hashed array
@@ -94,6 +95,11 @@ def mkpair(evecs, mid):
     return co_val
 
 if __name__ == "__main__":
+    start = time.time()
+    cg = clebsch_gordan(1, 2, 1, 1, -2, -1)
+    end = time.time()
+    elapsed = end - start
+    print("{},{}(sec)".format(cg, elapsed))
     # get the l list
     print("Enter the azimuthal quantum number list of seed functions")
     lis = input("such as l1, l2 ,... , lp:")
