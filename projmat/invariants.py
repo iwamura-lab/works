@@ -63,8 +63,8 @@ def clebsch_gordan(j1, j2, j3, m1, m2, m3):
     coef = sqrt((2*j3+1)*dfactorial / nfactorial)
     vsum = 0
     for v in range(vmin, vmax+1):
-        vsum += ((-1)**(v+j2+m2)*factorial(j2+j3+m1-v)*factorial(j1-m1+v)/
-                 (factorial(v)*factorial(j3-j1+j2-v)*factorial(j3+m3-v)*factorial(v+j1-j2-m3)))
+        vsum += (-1)**(v+j2+m2)*factorial(j2+j3+m1-v)*factorial(j1-m1+v)/\
+                 (factorial(v)*factorial(j3-j1+j2-v)*factorial(j3+m3-v)*factorial(v+j1-j2-m3))
     return coef * vsum
 
 def mkpair(evecs, mid):

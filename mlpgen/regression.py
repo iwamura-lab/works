@@ -14,6 +14,7 @@ import numpy as np
 
 # from mlptools import some modules
 from mlptools.common.fileio import InputParams
+from mlptools.mlpgen.regression import get_xy, PotEstimation
 from mlptools.common.readvasp import Vasprun
 from mlptools.common.structure import Structure
 from mlptools.mlpgen.io import ReadFeatureParams
@@ -32,6 +33,8 @@ class TrainStructure:
                         for v, vol in zip(vasprun_array, self.vol_array)]
         self.st_array = [Structure(st[0], st[1], st[2], st[4], types=st[5])\
                          for st in struct_array]
+        self.with_force = with_force
+        self.weight = weight
 
     def extract_s(self, s):
         """Extract xx, yy, zz, xy, yz, zx components from Stress Tensor.
@@ -65,15 +68,14 @@ class TrainStructure:
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--infile', type=str, required=True, \
-                        help='Input file name. Training is performed from vasprun files.')
+        help='Input file name. Training is performed from vasprun files.')
+    parser.add_argument('-p', '--pot', type=str, \
+        default='mlp.pkl', help='Potential file name for mlptools')
     args = parser.parse_args()
 
     p = InputParams(args.infile)
     di = ReadFeatureParams(p).get_params()
 
-    start = time.time()
-    tr = TrainStructure(di.train_names, di.train_force, di.train_weight)
-    tr.flat_array()
-    tr.correct_energy(di.atom_e)
-    end = time.time()
-    print(str(end-start)+"(s)")
+    # calculate structural features
+    tr = PotEstimation(di=di)
+    tr.set_regression_data()
