@@ -61,11 +61,11 @@ def clebsch_gordan(j1, j2, j3, m1, m2, m3):
     for i in numerator:
         nfactorial *= factorial(i)
     coef = sqrt((2*j3+1)*dfactorial / nfactorial)
-    csum = 0
+    vsum = 0
     for v in range(vmin, vmax+1):
-        csum += ((-1)**(v+j2+m2)*factorial(j2+j3+m1-v)*factorial(j1-m1+v)/
-                 (factorial(v)*factorial(j3-j1+j2-v)*factorial(j3+m3-v)*factorial(v+j1-j2-m3)))
-    return coef * csum
+        vsum += (-1)**(v+j2+m2)*factorial(j2+j3+m1-v)*factorial(j1-m1+v)/\
+                 (factorial(v)*factorial(j3-j1+j2-v)*factorial(j3+m3-v)*factorial(v+j1-j2-m3))
+    return coef * vsum
 
 def mkpair(evecs, mid):
     """Return the pair of eigen vector and key of hashed array
@@ -96,9 +96,10 @@ def mkpair(evecs, mid):
 
 if __name__ == "__main__":
     start = time.time()
-    cg = clebsch_gordan(1, 2, 1, -1, 2, 1)
+    cg = clebsch_gordan(1, 2, 1, 1, -2, -1)
     end = time.time()
-    print(str(end-start)+"(s)")
+    elapsed = end - start
+    print("{},{}(sec)".format(cg, elapsed))
     # get the l list
     print("Enter the azimuthal quantum number list of seed functions")
     lis = input("such as l1, l2 ,... , lp:")
