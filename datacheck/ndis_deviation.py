@@ -1,10 +1,8 @@
+#!/usr/bin/env python
 """
 Program to calculate the standard deviation of 1st neighboring atomic distance
 regarding structure datas
 """
-# set python interpreter(2 or 3 ?)
-# !/usr/bin/python3
-# -*- coding: UTF-8 -*-
 
 # import standard modules
 import os

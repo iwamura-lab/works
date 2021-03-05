@@ -1,10 +1,7 @@
+#!/usr/bin/env python
 """
 Program to draw and save the graph of radial functions
 """
-
-# set python interpreter(2 or 3 ?)
-# !/usr/bin/python3
-# -*- coding: UTF-8 -*-
 
 # import module to handle array
 import numpy as np

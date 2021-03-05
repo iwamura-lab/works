@@ -1,4 +1,4 @@
-#!/home/iwamura/mlp-Fe/venv/bin python
+#!/usr/bin/env python
 """
 Program to count atoms in POSCAR files
 """
@@ -14,9 +14,9 @@ from mlptools.common.readvasp import Poscar
 
 if __name__ == "__main__" :
     poscar_dir = "/home/iwamura/mlp-Fe/3-dft/init/"
-    paths = os.listdir(poscar_dir)
+    poscars = os.listdir(poscar_dir)
     atom_numbers = np.array([sum(Poscar(poscar_dir+poscarfile).n_atoms)\
-                            for poscarfile in tqdm.tqdm(paths)])
+                            for poscarfile in tqdm.tqdm(poscars)])
     if np.any(atom_numbers != 32):
         print("There is at least one file without 32 atoms.")
     else:

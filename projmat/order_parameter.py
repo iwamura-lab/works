@@ -1,9 +1,7 @@
+#!/usr/bin/env python
 """
 Program to calculate order parameters when selecting spherical harmonics as basis
 """
-# set python interpreter(2 or 3 ?)
-# !/usr/bin/python3
-# -*- coding: UTF-8 -*-
 
 # import standard modules
 import os
