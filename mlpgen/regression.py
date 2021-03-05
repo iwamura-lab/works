@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Program to execute the regression of mlp about paramagnetic FCC Fe
+Program for the regression of mlp about paramagnetic FCC Fe
 """
 
 # import standard modules
@@ -14,7 +14,6 @@ import numpy as np
 # from mlptools import some modules
 from mlptools.common.fileio import InputParams
 from mlptools.mlpgen.regression import PotEstimation
-from mlptools.common.readvasp import Vasprun
 from mlptools.common.structure import Structure
 from mlptools.mlpgen.io import ReadFeatureParams
 from mlptools.mlpgen.model import Terms
@@ -23,7 +22,7 @@ def rearange_L(array, index_array):
     """Move designated columns to the head of array.
 
     Args:
-        array (ndarray): input array
+        array (ndarray): input array(2D)
         index_array (list): list of index by which columns are designated
 
     Returns:
@@ -32,53 +31,8 @@ def rearange_L(array, index_array):
     rest = np.delete(array, index_array, 1)
     return np.hstack((array[:, index_array], rest))
 
-class TrainStructure:
-    """Class to store training data structure
-    """
-    def __init__(self, fnames:str, with_force, weight):
-        vasprun_array = [Vasprun(vasp_path) for ref_file in fnames \
-                              for vasp_path in np.loadtxt(ref_file, dtype=str)[:, 1]]
-        self.e_array = [v.get_energy() for v in vasprun_array]
-        self.f_array = [np.ravel(v.get_forces(), order='F') for v in vasprun_array]
-        struct_array = [tuple(v.get_structure()) for v in vasprun_array]
-        self.vol_array = [st[3] for st in struct_array]
-        self.s_array = [self.extract_s(v.get_stress() * vol / 1602.1766208) \
-                        for v, vol in zip(vasprun_array, self.vol_array)]
-        self.st_array = [Structure(st[0], st[1], st[2], st[4], types=st[5])\
-                         for st in struct_array]
-        self.with_force = with_force
-        self.weight = weight
-
-    def extract_s(self, s):
-        """Extract xx, yy, zz, xy, yz, zx components from Stress Tensor.
-
-        Args:
-            s (multi_list): Stress Tensor
-
-        Returns:
-            list: xx, yy, zz, xy, yz, zx in order
-        """
-        return [s[0][0], s[1][1], s[2][2], s[0][1], s[1][2], s[2][0]]
-
-    def correct_energy(self, atom_e):
-        """Correct e_array by using the energy of isolated atoms.
-
-        Args:
-            atom_e (list): isolated atoms energy
-        """
-        self.e_array = [e - np.inner(st.n_atoms, atom_e) \
-                        for e, st in zip(self.e_array, self.st_array)]
-
-    def flat_array(self):
-        """Flaten multi-list-type class properties.
-        """
-        f_array = copy.deepcopy(self.f_array)
-        s_array = copy.deepcopy(self.s_array)
-        self.f_array = np.reshape(f_array, -1, order='C')
-        self.s_array = np.reshape(s_array, -1, order='C')
-
 class VirtualDataInput:
-    """Generate a new DataInput from normal DataInput
+    """Generate a virtual DataInput from normal DataInput
     """
     def __init__(self, di):
         self.vdi = copy.deepcopy(di)
@@ -88,7 +42,7 @@ class VirtualDataInput:
         """Return a newly generated DataInput.
 
         Returns:
-            DataInput: virtual data structure
+            DataInput: virtual DataInput
         """
         return self.vdi
 
@@ -99,7 +53,20 @@ class MagneticStructuralFeatures:
         st_set_all_train = self.get_virtual_structures(tr.train, spin_array)
         n_st_dataset = [len(data.st_set) for data in tr.train]
         term = Terms(st_set_all_train, vdi, n_st_dataset, vdi.train_force)
-        self.train_x_pm = term.get_x()
+        self.train_x = np.hstack((tr.train_x, term.get_x()))
+        st_set_all_test = self.get_virtual_structures(tr.test, spin_array)
+        n_st_dataset = [len(data.st_set) for data in tr.test]
+        force_dataset = [vdi.wforce for v in vdi.test_names]
+        term = Terms(st_set_all_test, vdi, n_st_dataset, force_dataset)
+        self.test_x = np.hstack((tr.test_x, term.get_x()))
+
+    def get_x(self):
+        """Return the X matrices for regression
+
+        Returns:
+            ndarray: X matrices needed for training and test
+        """
+        return self.train_x, self.test_x
 
     def get_virtual_structures(self, dataset, spin_array):
         """Generate virtual structures from dataset based on spin_array and return the
@@ -143,6 +110,44 @@ if __name__ == '__main__' :
 
     # calculate structural features
     tr = PotEstimation(di=di)
-    MagneticStructuralFeatures(tr, spin_array, vdi)
-    tr.set_regression_data()
     # calculate magnetic structural features
+    tr.train_x, tr.test_x = MagneticStructuralFeatures(tr, spin_array, vdi).get_x()
+    tr.set_regression_data()
+
+    # start regression
+    if args.noreg is False:
+        reg_method, alpha_min, alpha_max, n_alpha = read_regression_params(p)
+        if (reg_method == 'ridge' or reg_method == 'lasso'):
+            pot = tr.regularization_reg(method=reg_method,alpha_min=alpha_min,\
+                alpha_max=alpha_max,n_alpha=n_alpha,svd=args.svd)
+        elif reg_method == 'normal':
+            pot = tr.normal_reg()
+
+        pot.save_pot(file_name=args.pot)
+        pot.save_pot_for_lammps(file_name=args.lammps)
+
+        print(' --- input parameters ----')
+        pot.di.model_e.print()
+        print(' --- best model ----')
+        if (reg_method == 'ridge' or reg_method == 'lasso'):
+            print(' alpha = ', tr.best_alpha)
+
+        rmse_train_e, rmse_test_e, rmse_train_f, files_train, \
+            rmse_test_f, rmse_train_s, rmse_test_s, files_test \
+            = tr.get_best_rmse()
+
+        print(' -- Prediction Error --')
+        for re, rf, rs, f in \
+            zip(rmse_train_e, rmse_train_f, rmse_train_s, files_train):
+            print(' structures :', f)
+            print(' rmse (energy, train) = ', re * 1000, ' (meV/atom)')
+            if rf is not None:
+                print(' rmse (force, train) = ', rf, ' (eV/ang)')
+                print(' rmse (stress, train) = ', rs, ' (GPa)')
+        for re, rf, rs, f in \
+            zip(rmse_test_e, rmse_test_f, rmse_test_s, files_test):
+            print(' structures :', f)
+            print(' rmse (energy, test) = ', re * 1000, ' (meV/atom)')
+            if rf is not None:
+                print(' rmse (force, test) = ', rf, ' (eV/ang)')
+                print(' rmse (stress, test) = ', rs, ' (GPa)')
