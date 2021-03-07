@@ -15,7 +15,7 @@ import numpy as np
 from mlptools.common.fileio import InputParams
 from mlptools.mlpgen.regression import PotEstimation
 from mlptools.common.structure import Structure
-from mlptools.mlpgen.io import ReadFeatureParams
+from mlptools.mlpgen.io import ReadFeatureParams, read_regression_params
 from mlptools.mlpgen.model import Terms
 
 def rearange_L(array, index_array):
