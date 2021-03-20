@@ -8,7 +8,6 @@ import copy
 import argparse
 #import time
 #import tqdm
-import random
 import numpy as np
 
 # from mlptools import some modules
@@ -18,97 +17,53 @@ from mlptools.common.structure import Structure
 from mlptools.mlpgen.io import ReadFeatureParams, read_regression_params
 from mlptools.mlpgen.model import Terms
 
-def rearange_L(array, index_array):
-    """Move designated columns to the head of array.
-
-    Args:
-        array (ndarray): input array(2D)
-        index_array (list): list of index by which columns are designated
-
-    Returns:
-        ndarray: changed array
-    """
-    rest = np.delete(array, index_array, 1)
-    return np.hstack((array[:, index_array], rest))
-
-class VirtualDataInput:
-    """Generate a virtual DataInput from normal DataInput
-    """
-    def __init__(self, di):
-        self.vdi = copy.deepcopy(di)
-        self.vdi.n_type = 2
-
-    def get_data_input(self):
-        """Return a newly generated DataInput.
-
-        Returns:
-            DataInput: virtual DataInput
-        """
-        return self.vdi
-
-class MagneticStructuralFeatures:
-    """Data structure including magnetic structural features
-    """
-    def __init__(self, tr, spin_array, vdi):
-        st_set_all_train = self.get_virtual_structures(tr.train, spin_array)
-        n_st_dataset = [len(data.st_set) for data in tr.train]
-        term = Terms(st_set_all_train, vdi, n_st_dataset, vdi.train_force)
-        self.train_x = np.hstack((tr.train_x, term.get_x()))
-        st_set_all_test = self.get_virtual_structures(tr.test, spin_array)
-        n_st_dataset = [len(data.st_set) for data in tr.test]
-        force_dataset = [vdi.wforce for v in vdi.test_names]
-        term = Terms(st_set_all_test, vdi, n_st_dataset, force_dataset)
-        self.test_x = np.hstack((tr.test_x, term.get_x()))
-
-    def get_x(self):
-        """Return the X matrices for regression
-
-        Returns:
-            ndarray: X matrices needed for training and test
-        """
-        return self.train_x, self.test_x
-
-    def get_virtual_structures(self, dataset, spin_array):
-        """Generate virtual structures from dataset based on spin_array and return the
-           list of them
-
-        Args:
-            dataset (dr_array): array of the instances, DataRegression
-            spin_array (ndarray): which spin each atom has
-
-        Returns:
-            list: list of rewrited structures
-        """
-        index_array = np.nonzero(spin_array==1)[0]
-        n_atom_1 = len(index_array)
-        n_atom_2 = sum(dataset[0].st_set[0].n_atoms) - len(index_array)
-        n_atoms = [n_atom_1, n_atom_2]
-        specie1 = ["A" for i in range(n_atom_1)]
-        specie2 = ["B" for i in range(n_atom_2)]
-        elements = specie1.extend(specie2)
-        type1 = [0 for i in range(n_atom_1)]
-        type2 = [1 for i in range(n_atom_2)]
-        types = type1.extend(type2)
-        st_list = [Structure(st.axis, rearange_L(st.positions, index_array), n_atoms, elements, \
-                   types=types, comment=st.comment) for data in dataset for st in data.st_set]
-        return st_list
-
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--infile', type=str, required=True, \
         help='Input file name. Training is performed from vasprun files.')
+    parser.add_argument('-d', '--read_data', type=str,\
+        help='Training data file name. Training is performed from data.')
+    parser.add_argument('--write_data', type=str, help='Saving training data.')
+    parser.add_argument('--svd', action='store_true', \
+        help='Use SVD to estimate ridge regression coefficients.')
+    parser.add_argument('--noreg', action='store_true', \
+        help='No regression mode.')
     parser.add_argument('-p', '--pot', type=str, \
         default='mlp.pkl', help='Potential file name for mlptools')
+    parser.add_argument('-l', '--lammps', type=str,\
+        default='mlp.lammps', help='Potential file name for lammps')
     args = parser.parse_args()
 
     p = InputParams(args.infile)
     di = ReadFeatureParams(p).get_params()
-    vdi = VirtualDataInput(di).get_data_input()
 
-    # calculate structural features
+    # Make normal DataInput, which don't have different atoms
+    # They have no information about vasprun.xml.
+    normal_di = copy.deepcopy(di)
+    normal_di.n_type = 1
+
+    # calculate spin structural features
     tr = PotEstimation(di=di)
-    # calculate magnetic structural features
-    tr.train_x, tr.test_x = MagneticStructuralFeatures(tr, spin_array, vdi).get_x()
+
+    # calculate normal structural features
+    # calculation of train_x
+    normal_types = [0 for i in range(32)]
+    st_set_all_train = [Structure(st.axis, st.positions, [32], elements=st.elements, \
+               types=normal_types, comment=st.comment) for data in tr.train for st in data.st_set]
+    n_st_dataset_train = [len(data.st_set) for data in tr.train]
+    term = Terms(st_set_all_train, normal_di, n_st_dataset_train, normal_di.train_force)
+    train_x = np.hstack((tr.train_x, term.get_x()))
+    tr.train_x = train_x
+
+    # calculation of test_x
+    st_set_all_test = [Structure(st.axis, st.positions, [32], elements=st.elements, \
+               types=normal_types, comment=st.comment) for data in tr.test for st in data.st_set]
+    n_st_dataset_test = [len(data.st_set) for data in tr.test]
+    force_dataset = [di.wforce for v in di.test_names]
+    term = Terms(st_set_all_test, normal_di, n_st_dataset_test, force_dataset)
+    test_x = np.hstack((tr.test_x, term.get_x()))
+    tr.test_x = test_x
+
     tr.set_regression_data()
 
     # start regression
