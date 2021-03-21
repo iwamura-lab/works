@@ -1,6 +1,7 @@
-.vscode/
+/.vscode/
 pylintrc
 __pycache__
 __init__.py
 /results/
 /workspace.code-workspace
+shared/
