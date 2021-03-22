@@ -2,15 +2,16 @@
 """
 Program to make input file, test_vasprun_Fe.
 Use this program with standard output redirection such as
-    ./select_test.py > test_vasprun_Fe.
+    ./select_test.py > test_vasprun_Fe
 """
 
 # import standard modules
+import os
 import random
 import pickle
 
 if __name__ == "__main__" :
-    fname_prefix = "/home/iwamura/mlp-Fe/3-dft/finished/"
+    fname_prefix = os.getenv("HOME")+"/mlp-Fe/3-dft/finished/"
     fnum_list = [[(i+1) + 5*j for i in range(5)] for j in range(1000)]
     train_fnum_list = [i+1 for i in range(5000)]
     # output the path of selected vasprun.xml for test as standard output
