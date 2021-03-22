@@ -16,7 +16,7 @@ if __name__ == "__main__" :
     # output the path of selected vasprun.xml for test as standard output
     for divided in fnum_list :
         fnum = random.choice(divided)
-        print(fname_prefix+str(fnum).zfill(5)+"/vasprun.xml")
+        print(fname_prefix+str(fnum).zfill(5)+"/vasprun.xml_to_mlip")
         train_fnum_list.remove(fnum)
 
     # serialize object

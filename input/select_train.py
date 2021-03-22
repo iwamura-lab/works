@@ -13,4 +13,4 @@ if __name__ == "__main__" :
     fname_prefix = "/home/iwamura/mlp-Fe/3-dft/finished/"
     fnum_list = pickle.load(open("shared/pickle.dump", "rb"))
     for fnum in fnum_list :
-        print(fname_prefix+str(fnum).zfill(5)+"/vasprun.xml")
+        print(fname_prefix+str(fnum).zfill(5)+"/vasprun.xml_to_mlip")
