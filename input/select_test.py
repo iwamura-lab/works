@@ -12,7 +12,7 @@ import pickle
 
 if __name__ == "__main__" :
     fname_prefix = os.getenv("HOME")+"/mlp-Fe/3-dft/finished/"
-    fnum_list = [[(i+1) + 5*j for i in range(5)] for j in range(1000)]
+    fnum_list = [[(i+1) + 10*j for i in range(10)] for j in range(500)]
     train_fnum_list = [i+1 for i in range(5000)]
     # output the path of selected vasprun.xml for test as standard output
     for divided in fnum_list :
