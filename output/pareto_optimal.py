@@ -11,7 +11,6 @@ from scipy.spatial import ConvexHull
 
 if __name__ == "__main__" :
     mlp_dict = {}
-    pareto_set = set()
     points = []
     csv_path = os.getenv("HOME")+"/mlp-Fe/output/Fe/rmse_time.csv"
     f = open(csv_path)
@@ -21,6 +20,7 @@ if __name__ == "__main__" :
         points.append([float(point[1]), float(point[2])])
     f.close()
 
+    pareto_list = []
     points = np.array(points)
     hull = ConvexHull(points)
     for simplex in hull.simplices:
@@ -30,7 +30,7 @@ if __name__ == "__main__" :
         y2 = points[simplex[1]][1]
         slope = (y2 - y1) / (x2 - x1)
         if slope < 0 :
-            pareto_set.update(simplex)
+            pareto_list.append(simplex)
 
-    for i in pareto_set:
-        print(mlp_dict[i])
+    for line in pareto_list:
+        print(mlp_dict[line[0]]+", "+mlp_dict[line[1]])
