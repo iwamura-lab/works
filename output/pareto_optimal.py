@@ -29,8 +29,12 @@ if __name__ == "__main__" :
         y1 = points[simplex[0]][1]
         y2 = points[simplex[1]][1]
         slope = (y2 - y1) / (x2 - x1)
+
+        # select negative slope lines below all the points
         if slope < 0 :
-            pareto_list.append(simplex)
+            bool_list = [(point[1] - y1 - slope * (point[0] - x1)) >= -0.1 for point in points]
+            if np.all(bool_list) :
+                pareto_list.append(simplex)
 
     for line in pareto_list:
-        print(mlp_dict[line[0]]+", "+mlp_dict[line[1]])
+        print(mlp_dict[line[0]]+","+mlp_dict[line[1]])
