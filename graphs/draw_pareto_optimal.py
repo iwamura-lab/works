@@ -5,14 +5,23 @@ Program to draw the lines connecting pareto optimal MLPs and points of rmse_time
 
 # import standard modules
 import os
+import argparse
 from csv import reader
 import numpy as np
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__" :
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--rmse", "-r", type=str, default="rmse_time.csv",
+                        help="data file of rmse and elapsed time")
+    parser.add_argument("--pareto", "-p", type=str, default="pareto_optimal.csv",
+                        help="data file about pareto optimal MLPs")
+    args = parser.parse_args()
+
     dir_path = os.getenv("HOME")+"/mlp-Fe/output/Fe/"
-    points_path = dir_path+"rmse_time.csv"
-    lines_path = dir_path+"pareto_optimal.csv"
+    points_path = dir_path+args.rmse
+    lines_path = dir_path+args.pareto
     f = open(points_path)
     mlp_dict = {point[0]: [float(point[1]), float(point[2])] for point in reader(f)}
     f.close()
