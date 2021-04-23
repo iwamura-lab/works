@@ -5,6 +5,7 @@ Modules about operation of structure data or structure file
 
 # import standard modules
 import sys
+import argparse
 import numpy as np
 
 def division_and_sliding(a, b):
@@ -73,5 +74,11 @@ class LammpsStructure:
             print("   {0:.15f} {1:.15f} {2:.15f}".format(p[0], p[1], p[2]), file=f)
 
 if __name__ == "__main__":
-    lmp_st = LammpsStructure()
-    lmp_st.output_poscar()
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", "--file", default="structure_equiv", \
+                        type=str, help="file name of the cubic structure to read")
+    args = parser.parse_args()
+
+    lmp_st = LammpsStructure(filename=args.file)
+    lmp_st.output_poscar(filename="POSCAR")
