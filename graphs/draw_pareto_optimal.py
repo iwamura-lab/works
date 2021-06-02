@@ -32,7 +32,9 @@ if __name__ == "__main__" :
     for line in reader(f) :
         x = [mlp_dict[line[0]][0], mlp_dict[line[1]][0]]
         y = [mlp_dict[line[0]][1], mlp_dict[line[1]][1]]
-        ax.plot(x, y, 'r-')
+        ax.plot(x, y, 'r-', lw=3)
     f.close()
     ax.scatter(points[:, 0], points[:, 1], s=2, color='k', marker=".")
+    ax.set(xlim=(0, 1.5), ylim=(6.5, 11.0), xticks=[0, 0.5, 1.0, 1.5], yticks=[6.5, 7.0, 8.0, 9.0, 10, 11])
+    ax.tick_params(labelsize="30")
     plt.show()
