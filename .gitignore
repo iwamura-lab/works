@@ -5,3 +5,7 @@ __init__.py
 /results/
 /workspace.code-workspace
 shared/
+build/
+/CMakeLists.txt
+/main.cpp
+/at_coder/
